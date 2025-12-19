@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import type { QuizItem, VocabEntry } from "@/lib/vocab";
 import { RefreshCw, Volume2 } from "lucide-react";
@@ -113,7 +114,7 @@ export default function QuizCard({
         onClick={() => handleSelect(option)}
         className={`${base} ${variant}`}
       >
-        <div className="mb-1 flex items-center justify-between gap-3 text-sm text-slate-500">
+        <div className="mb-2 flex items-center justify-between gap-3 text-sm text-slate-500">
           <span className="text-left">{option.standardArabicTransliteration}</span>
           <button
             type="button"
@@ -128,9 +129,23 @@ export default function QuizCard({
             Play
           </button>
         </div>
-        <p className="text-2xl font-bold" style={{ fontFamily: "var(--font-noto-naskh), serif" }}>
-          {option.standardArabic}
-        </p>
+        <div className="flex items-start gap-3">
+          {option.image && (
+            <Image
+              src={option.image}
+              alt={`${option.english} illustration`}
+              width={64}
+              height={64}
+              className="h-16 w-16 rounded-xl border border-emerald-50 object-cover shadow-sm"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            />
+          )}
+          <p className="text-2xl font-bold" style={{ fontFamily: "var(--font-noto-naskh), serif" }}>
+            {option.standardArabic}
+          </p>
+        </div>
       </button>
     );
   };

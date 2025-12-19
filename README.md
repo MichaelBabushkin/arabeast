@@ -14,7 +14,7 @@ Then open http://localhost:3000
 ## Features
 - Local MSA vocab loaded from `data/modern-standard-arabic.json`
 - API route at `/api/quiz` providing one target + three distractors
-- Quiz UI with green/red feedback, Next Question flow, mobile-first layout, and per-option audio playback (TTS fallback via browser SpeechSynthesis)
+- Quiz UI with green/red feedback, Next Question flow, mobile-first layout, per-option audio playback (TTS fallback), and placeholder images per choice
 - Gamification: 5-heart life system, +10 XP per correct answer, mocked `3 days` streak
 - Modular components: `Header`, `QuizCard`, `GameOverModal`
 

@@ -6,6 +6,7 @@ export type VocabEntry = {
   standardArabic: string;
   standardArabicTransliteration: string;
   audio?: string;
+  image?: string;
 };
 
 const vocabCache: VocabEntry[] = vocab;

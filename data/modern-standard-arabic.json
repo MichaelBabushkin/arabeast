@@ -1,12 +1,12 @@
 [
-  {"id": "animal-1", "english": "Lion", "standardArabic": "أسد", "standardArabicTransliteration": "asad", "audio": ""},
-  {"id": "animal-2", "english": "Elephant", "standardArabic": "فيل", "standardArabicTransliteration": "feel", "audio": ""},
-  {"id": "animal-3", "english": "Horse", "standardArabic": "حصان", "standardArabicTransliteration": "hisan", "audio": ""},
-  {"id": "animal-4", "english": "Cat", "standardArabic": "قطة", "standardArabicTransliteration": "qitta", "audio": ""},
-  {"id": "animal-5", "english": "Dog", "standardArabic": "كلب", "standardArabicTransliteration": "kalb", "audio": ""},
-  {"id": "animal-6", "english": "Bird", "standardArabic": "طائر", "standardArabicTransliteration": "ta'ir", "audio": ""},
-  {"id": "animal-7", "english": "Fish", "standardArabic": "سمكة", "standardArabicTransliteration": "samakah", "audio": ""},
-  {"id": "animal-8", "english": "Rabbit", "standardArabic": "أرنب", "standardArabicTransliteration": "arnab", "audio": ""},
-  {"id": "animal-9", "english": "Giraffe", "standardArabic": "زرافة", "standardArabicTransliteration": "zarafah", "audio": ""},
-  {"id": "animal-10", "english": "Monkey", "standardArabic": "قرد", "standardArabicTransliteration": "qird", "audio": ""}
+  {"id": "animal-1", "english": "Lion", "standardArabic": "أسد", "standardArabicTransliteration": "asad", "audio": "", "image": "https://placehold.co/256x256?text=Lion"},
+  {"id": "animal-2", "english": "Elephant", "standardArabic": "فيل", "standardArabicTransliteration": "feel", "audio": "", "image": "https://placehold.co/256x256?text=Elephant"},
+  {"id": "animal-3", "english": "Horse", "standardArabic": "حصان", "standardArabicTransliteration": "hisan", "audio": "", "image": "https://placehold.co/256x256?text=Horse"},
+  {"id": "animal-4", "english": "Cat", "standardArabic": "قطة", "standardArabicTransliteration": "qitta", "audio": "", "image": "https://placehold.co/256x256?text=Cat"},
+  {"id": "animal-5", "english": "Dog", "standardArabic": "كلب", "standardArabicTransliteration": "kalb", "audio": "", "image": "https://placehold.co/256x256?text=Dog"},
+  {"id": "animal-6", "english": "Bird", "standardArabic": "طائر", "standardArabicTransliteration": "ta'ir", "audio": "", "image": "https://placehold.co/256x256?text=Bird"},
+  {"id": "animal-7", "english": "Fish", "standardArabic": "سمكة", "standardArabicTransliteration": "samakah", "audio": "", "image": "https://placehold.co/256x256?text=Fish"},
+  {"id": "animal-8", "english": "Rabbit", "standardArabic": "أرنب", "standardArabicTransliteration": "arnab", "audio": "", "image": "https://placehold.co/256x256?text=Rabbit"},
+  {"id": "animal-9", "english": "Giraffe", "standardArabic": "زرافة", "standardArabicTransliteration": "zarafah", "audio": "", "image": "https://placehold.co/256x256?text=Giraffe"},
+  {"id": "animal-10", "english": "Monkey", "standardArabic": "قرد", "standardArabicTransliteration": "qird", "audio": "", "image": "https://placehold.co/256x256?text=Monkey"}
 ]
