@@ -1,0 +1,12 @@
+[
+  {"id": "animal-1", "english": "Lion", "standardArabic": "أسد", "standardArabicTransliteration": "asad", "audio": ""},
+  {"id": "animal-2", "english": "Elephant", "standardArabic": "فيل", "standardArabicTransliteration": "feel", "audio": ""},
+  {"id": "animal-3", "english": "Horse", "standardArabic": "حصان", "standardArabicTransliteration": "hisan", "audio": ""},
+  {"id": "animal-4", "english": "Cat", "standardArabic": "قطة", "standardArabicTransliteration": "qitta", "audio": ""},
+  {"id": "animal-5", "english": "Dog", "standardArabic": "كلب", "standardArabicTransliteration": "kalb", "audio": ""},
+  {"id": "animal-6", "english": "Bird", "standardArabic": "طائر", "standardArabicTransliteration": "ta'ir", "audio": ""},
+  {"id": "animal-7", "english": "Fish", "standardArabic": "سمكة", "standardArabicTransliteration": "samakah", "audio": ""},
+  {"id": "animal-8", "english": "Rabbit", "standardArabic": "أرنب", "standardArabicTransliteration": "arnab", "audio": ""},
+  {"id": "animal-9", "english": "Giraffe", "standardArabic": "زرافة", "standardArabicTransliteration": "zarafah", "audio": ""},
+  {"id": "animal-10", "english": "Monkey", "standardArabic": "قرد", "standardArabicTransliteration": "qird", "audio": ""}
+]
