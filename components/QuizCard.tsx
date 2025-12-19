@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { QuizItem, VocabEntry } from "@/lib/vocab";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Volume2 } from "lucide-react";
 
 const MAX_HEARTS = 5;
 
@@ -53,6 +53,26 @@ export default function QuizCard({
     loadQuiz();
   }, [quizKey]);
 
+  const speakArabic = (text: string) => {
+    if (typeof window === "undefined") return;
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "ar-SA";
+      utterance.rate = 0.9;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  const playOptionAudio = (option: VocabEntry) => {
+    if (option.audio) {
+      const audio = new Audio(option.audio);
+      audio.play().catch(() => speakArabic(option.standardArabic));
+      return;
+    }
+    speakArabic(option.standardArabic);
+  };
+
   const handleSelect = (option: VocabEntry) => {
     if (!quiz || selectedId || hearts <= 0) return;
     setSelectedId(option.id);
@@ -93,7 +113,21 @@ export default function QuizCard({
         onClick={() => handleSelect(option)}
         className={`${base} ${variant}`}
       >
-        <p className="text-sm text-slate-500 text-left">{option.standardArabicTransliteration}</p>
+        <div className="mb-1 flex items-center justify-between gap-3 text-sm text-slate-500">
+          <span className="text-left">{option.standardArabicTransliteration}</span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              playOptionAudio(option);
+            }}
+            className="flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:border-emerald-200 hover:text-emerald-700"
+            aria-label={`Play audio for ${option.standardArabic}`}
+          >
+            <Volume2 className="h-4 w-4" />
+            Play
+          </button>
+        </div>
         <p className="text-2xl font-bold" style={{ fontFamily: "var(--font-noto-naskh), serif" }}>
           {option.standardArabic}
         </p>
