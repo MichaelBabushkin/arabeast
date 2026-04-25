@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import type { QuizItem, VocabEntry } from "@/lib/vocab";
+import { speakArabic } from "@/lib/speech";
 import { RefreshCw, Volume2 } from "lucide-react";
 
 const MAX_HEARTS = 5;
@@ -14,6 +15,7 @@ type QuizCardProps = {
   onHeartsChange: (value: number) => void;
   onXpChange: (value: number) => void;
   onOutOfHearts: () => void;
+  onQuizLoaded?: (target: VocabEntry) => void;
 };
 
 export default function QuizCard({
@@ -23,6 +25,7 @@ export default function QuizCard({
   onHeartsChange,
   onXpChange,
   onOutOfHearts,
+  onQuizLoaded,
 }: QuizCardProps) {
   const [quiz, setQuiz] = useState<QuizItem | null>(null);
   const [loading, setLoading] = useState(false);
@@ -43,6 +46,7 @@ export default function QuizCard({
       }
       const data = (await res.json()) as QuizItem;
       setQuiz(data);
+      onQuizLoaded?.(data.target);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to load quiz");
     } finally {
@@ -53,17 +57,6 @@ export default function QuizCard({
   useEffect(() => {
     loadQuiz();
   }, [quizKey]);
-
-  const speakArabic = (text: string) => {
-    if (typeof window === "undefined") return;
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "ar-SA";
-      utterance.rate = 0.9;
-      window.speechSynthesis.speak(utterance);
-    }
-  };
 
   const playOptionAudio = (option: VocabEntry) => {
     if (option.audio) {
@@ -100,11 +93,11 @@ export default function QuizCard({
     const failure = isChosen && isCorrect === false;
 
     const base = "w-full rounded-2xl border px-4 py-3 text-right transition text-lg font-semibold";
-    let variant = "bg-white border-emerald-50 hover:border-emerald-200";
+    let variant = "bg-white/5 border-white/10 hover:border-amber-400/40 text-amber-50";
 
-    if (success) variant = "bg-emerald-50 border-emerald-300 text-emerald-800";
-    if (failure) variant = "bg-rose-50 border-rose-200 text-rose-700";
-    if (!isChosen && selectedId && correctChoice) variant = "bg-emerald-50 border-emerald-200 text-emerald-700";
+    if (success) variant = "bg-emerald-900/40 border-emerald-400/60 text-emerald-200";
+    if (failure) variant = "bg-rose-900/40 border-rose-400/60 text-rose-200";
+    if (!isChosen && selectedId && correctChoice) variant = "bg-emerald-900/30 border-emerald-400/40 text-emerald-200";
 
     return (
       <button
@@ -114,20 +107,27 @@ export default function QuizCard({
         onClick={() => handleSelect(option)}
         className={`${base} ${variant}`}
       >
-        <div className="mb-2 flex items-center justify-between gap-3 text-sm text-slate-500">
+        <div className="mb-2 flex items-center justify-between gap-3 text-sm text-amber-300/70">
           <span className="text-left">{option.standardArabicTransliteration}</span>
-          <button
-            type="button"
+          <div
+            role="button"
+            tabIndex={0}
             onClick={(e) => {
               e.stopPropagation();
               playOptionAudio(option);
             }}
-            className="flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-600 hover:border-emerald-200 hover:text-emerald-700"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.stopPropagation();
+                playOptionAudio(option);
+              }
+            }}
+            className="flex cursor-pointer items-center gap-1 rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-amber-300/80 hover:border-amber-400/50 hover:text-amber-300"
             aria-label={`Play audio for ${option.standardArabic}`}
           >
             <Volume2 className="h-4 w-4" />
             Play
-          </button>
+          </div>
         </div>
         <div className="flex items-start gap-3">
           {option.image && (
@@ -151,27 +151,21 @@ export default function QuizCard({
   };
 
   return (
-    <div className="card p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-slate-500">English word</p>
-          <p className="text-3xl font-black text-slate-900">{quiz?.target.english ?? ""}</p>
-        </div>
-        <div className="text-right text-sm text-slate-500">
-          <p>Hearts: {hearts}/{MAX_HEARTS}</p>
-          <p>XP: {xp}</p>
-        </div>
+    <div className="game-card p-6 space-y-5">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-widest text-amber-400/70 mb-1">Choose the Arabic word for</p>
+        <p className="text-4xl font-black text-amber-50">{quiz?.target.english ?? <span className="opacity-0">_</span>}</p>
       </div>
 
       {error && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-900/30 px-4 py-3 text-amber-200">
           {error}
         </div>
       )}
 
       <div className="grid gap-3">
         {loading || !quiz ? (
-          <div className="flex items-center justify-center py-10 text-slate-500">Loading question…</div>
+          <div className="flex items-center justify-center py-10 text-amber-300/50">Loading question…</div>
         ) : (
           quiz.options.map(renderOption)
         )}
@@ -182,7 +176,7 @@ export default function QuizCard({
           type="button"
           onClick={loadQuiz}
           disabled={loading}
-          className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          className="inline-flex items-center gap-2 rounded-2xl border border-white/10 px-4 py-2 text-sm font-semibold text-amber-300/80 hover:bg-white/5"
         >
           <RefreshCw className="h-4 w-4" />
           Shuffle
@@ -191,9 +185,9 @@ export default function QuizCard({
           <button
             type="button"
             onClick={loadQuiz}
-            className="rounded-2xl bg-emerald-500 px-6 py-3 text-white font-semibold shadow-lg shadow-emerald-200 transition hover:bg-emerald-600"
+            className="rounded-2xl bg-amber-500 px-6 py-3 text-white font-semibold shadow-lg shadow-amber-900/50 transition hover:bg-amber-400"
           >
-            Next Question
+            Next Question →
           </button>
         )}
       </div>
