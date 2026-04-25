@@ -3,11 +3,13 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 body {
-  @apply bg-gradient-to-b from-emerald-50 via-white to-emerald-100 text-slate-900 min-h-screen;
+  background: radial-gradient(ellipse at top, #1a0a3e 0%, #0d0618 55%, #050210 100%);
+  color: #f0e8d0;
+  min-height: 100vh;
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
@@ -15,6 +17,135 @@ button:disabled {
   @apply opacity-70 cursor-not-allowed;
 }
 
+/* ── legacy card (kept for backwards compat) ── */
 .card {
-  @apply bg-white rounded-3xl shadow-card border border-emerald-50;
+  @apply rounded-3xl border;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
 }
+
+/* ── game card (quiz options, panels) ── */
+.game-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.5rem;
+  backdrop-filter: blur(8px);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   JINN CHARACTER ANIMATIONS
+───────────────────────────────────────────────────────────────── */
+
+/* float */
+@keyframes jinn-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-14px); }
+}
+
+/* gentle sob heave */
+@keyframes jinn-sob {
+  0%, 100% { transform: translateY(0); }
+  30%      { transform: translateY(-6px); }
+  55%      { transform: translateY(-6px); }
+  80%      { transform: translateY(0); }
+}
+
+/* blink */
+@keyframes jinn-blink {
+  0%, 88%, 100% { transform: scaleY(1); }
+  93%            { transform: scaleY(0.07); }
+}
+
+/* jaw open / close */
+@keyframes jinn-jaw {
+  0%, 100% { transform: translateY(0); }
+  20%      { transform: translateY(13px); }
+  40%      { transform: translateY(4px); }
+  60%      { transform: translateY(11px); }
+  80%      { transform: translateY(3px); }
+}
+
+/* head bob while talking */
+@keyframes jinn-head-bob {
+  0%, 100% { transform: rotate(0deg); }
+  25%      { transform: rotate(-2deg); }
+  75%      { transform: rotate(2deg); }
+}
+
+/* pointing hand gentle bob */
+@keyframes jinn-hand-gesture {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+/* cry mouth wobble */
+@keyframes jinn-cry-wobble {
+  0%, 100% { transform: scaleX(1) translateY(0); }
+  30%      { transform: scaleX(1.05) translateY(2px); }
+  60%      { transform: scaleX(0.96) translateY(0); }
+}
+
+/* tear stream (stroke-dashoffset flow) */
+@keyframes jinn-tear-flow {
+  0%   { stroke-dashoffset: 180; opacity: 0; }
+  8%   { opacity: 1; }
+  80%  { opacity: 0.9; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+
+/* tear drop falling */
+@keyframes jinn-drop-fall {
+  0%   { transform: translateY(0) scale(0.6); opacity: 0; }
+  15%  { opacity: 1; }
+  80%  { opacity: 0.8; }
+  100% { transform: translateY(52px) scale(1.3); opacity: 0; }
+}
+
+/* sparkle burst */
+@keyframes jinn-spark {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(2.8); opacity: 0.1; }
+}
+
+/* speech waves */
+@keyframes jinn-speech-wave {
+  0%   { transform: scaleX(0); opacity: 0; transform-origin: right center; }
+  30%  { opacity: 0.9; }
+  100% { transform: scaleX(1); opacity: 0; transform-origin: right center; }
+}
+
+/* magic particle drifts */
+@keyframes jinn-md1 { 0%, 100% { transform: translate(0,0); opacity: 0.9; } 50% { transform: translate(-6px,-18px); opacity: 0.1; } }
+@keyframes jinn-md2 { 0%, 100% { transform: translate(0,0); opacity: 0.7; } 50% { transform: translate(7px,-22px);  opacity: 0.1; } }
+@keyframes jinn-md3 { 0%, 100% { transform: translate(0,0); opacity: 0.8; } 50% { transform: translate(-4px,-16px); opacity: 0.2; } }
+@keyframes jinn-md4 { 0%, 100% { transform: translate(0,0); opacity: 0.6; } 50% { transform: translate(5px,-14px);  opacity: 0.1; } }
+
+/* ── applied classes ── */
+.jinn-float    { animation: jinn-float 3.2s ease-in-out infinite; transform-origin: 130px 210px; }
+.jinn-sob      { animation: jinn-float 3.2s ease-in-out infinite, jinn-sob 1.8s ease-in-out infinite; transform-origin: 130px 210px; }
+.jinn-blink    { animation: jinn-blink 4.2s ease-in-out infinite; transform-origin: 130px 85px; }
+.jinn-jaw      { animation: jinn-jaw 0.55s ease-in-out infinite; transform-origin: 130px 115px; }
+.jinn-cry-wobble { animation: jinn-cry-wobble 1.8s ease-in-out infinite; transform-origin: 130px 130px; }
+.jinn-hand-bob { animation: jinn-hand-gesture 1.1s ease-in-out infinite; }
+.jinn-spark    { animation: jinn-spark 1.2s ease-in-out infinite; }
+
+.jinn-tear-stream { stroke-dasharray: 180; animation: jinn-tear-flow 1.4s ease-in infinite; }
+.jinn-tear-d2     { animation-delay: 0.7s; }
+.jinn-tear-r      { animation-delay: 0.35s; }
+.jinn-tear-r2     { animation-delay: 1.05s; }
+
+.jinn-drop    { animation: jinn-drop-fall 1.4s ease-in infinite; }
+.jinn-drop-d1 { animation-delay: 0.25s; }
+.jinn-drop-d2 { animation-delay: 0.8s; }
+.jinn-drop-d3 { animation-delay: 1.1s; }
+.jinn-drop-d4 { animation-delay: 0.55s; }
+
+.jinn-speech-w1 { animation: jinn-speech-wave 1.1s ease-out infinite; }
+.jinn-speech-w2 { animation: jinn-speech-wave 1.1s ease-out infinite; animation-delay: 0.3s; }
+.jinn-speech-w3 { animation: jinn-speech-wave 1.1s ease-out infinite; animation-delay: 0.6s; }
+
+.jinn-md1 { animation: jinn-md1 2.4s ease-in-out infinite; }
+.jinn-md2 { animation: jinn-md2 3.0s ease-in-out infinite; }
+.jinn-md3 { animation: jinn-md3 2.7s ease-in-out infinite; }
+.jinn-md4 { animation: jinn-md4 3.5s ease-in-out infinite; }
