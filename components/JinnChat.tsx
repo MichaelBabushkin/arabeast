@@ -19,6 +19,7 @@ type Props = {
   learnedWords: string[];
   onLanguageChange: (lang: "en" | "he") => void;
   onJinnStateChange: (state: "idle" | "talking" | "happy" | "sad") => void;
+  storyContext?: string;
 };
 
 const INITIAL_MESSAGE: ChatMessage = {
@@ -28,7 +29,7 @@ const INITIAL_MESSAGE: ChatMessage = {
   transliteration: "Ahlan bika ya sadiqi",
 };
 
-export default function JinnChat({ language, learnedWords, onLanguageChange, onJinnStateChange }: Props) {
+export default function JinnChat({ language, learnedWords, onLanguageChange, onJinnStateChange, storyContext }: Props) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE]);
@@ -63,7 +64,7 @@ export default function JinnChat({ language, learnedWords, onLanguageChange, onJ
       const res = await fetch("/api/jinn", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: trimmed, language, history: apiHistory, learnedWords }),
+        body: JSON.stringify({ message: trimmed, language, history: apiHistory, learnedWords, storyContext }),
       });
 
       if (!res.ok) throw new Error("Jinn unavailable");

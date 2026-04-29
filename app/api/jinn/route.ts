@@ -42,6 +42,7 @@ export type JinnRequest = {
   language?: "en" | "he";
   history?: JinnMessage[];
   learnedWords?: string[];
+  storyContext?: string;
 };
 
 export type JinnResponse = {
@@ -64,7 +65,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { message, language = "en", history = [], learnedWords = [] } = body;
+  const { message, language = "en", history = [], learnedWords = [], storyContext = "" } = body;
   if (!message?.trim()) {
     return NextResponse.json({ error: "message is required" }, { status: 400 });
   }
@@ -76,10 +77,15 @@ export async function POST(req: NextRequest) {
       ? `\n\nThe player has already learned these Arabic words from the quiz: ${learnedWords.join("، ")}. Weave them naturally into your responses when relevant — reinforce them, use them in sentences, or connect them to the story.`
       : "";
 
+  const storyContextAddition = storyContext
+    ? `\n\nCurrent story context for this chapter: ${storyContext} Weave this narrative naturally into your responses.`
+    : "";
+
   const systemInstruction =
     SYSTEM_PROMPT +
     `\n\nThe player's native language is: ${language === "he" ? "Hebrew (עברית)" : "English"}.` +
-    learnedContext;
+    learnedContext +
+    storyContextAddition;
 
   const contents = [
     ...history.map((m) => ({ role: m.role, parts: [{ text: m.content }] })),

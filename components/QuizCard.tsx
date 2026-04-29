@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import type { QuizItem, VocabEntry } from "@/lib/vocab";
+import type { QuizItem, VocabCategory, VocabEntry } from "@/lib/vocab";
 import { speakArabic } from "@/lib/speech";
 import { RefreshCw, Volume2 } from "lucide-react";
 
@@ -12,6 +12,7 @@ type QuizCardProps = {
   hearts: number;
   xp: number;
   quizKey: number;
+  category?: VocabCategory;
   onHeartsChange: (value: number) => void;
   onXpChange: (value: number) => void;
   onOutOfHearts: () => void;
@@ -23,6 +24,7 @@ export default function QuizCard({
   hearts,
   xp,
   quizKey,
+  category,
   onHeartsChange,
   onXpChange,
   onOutOfHearts,
@@ -42,7 +44,8 @@ export default function QuizCard({
     setError(null);
 
     try {
-      const res = await fetch("/api/quiz", { cache: "no-store" });
+      const url = category ? `/api/quiz?category=${category}` : "/api/quiz";
+      const res = await fetch(url, { cache: "no-store" });
       if (!res.ok) {
         throw new Error("Failed to fetch quiz");
       }

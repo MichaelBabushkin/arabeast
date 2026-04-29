@@ -1,151 +1,266 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import GameOverModal from "@/components/GameOverModal";
-import Header from "@/components/Header";
-import JinnChat from "@/components/JinnChat";
-import QuizCard from "@/components/QuizCard";
-import JinnCharacter, { type JinnState } from "@/components/jinn/JinnCharacter";
-import type { VocabEntry } from "@/lib/vocab";
+import Link from "next/link";
+import { useState } from "react";
+import JinnCharacter from "@/components/jinn/JinnCharacter";
+import { BookOpen, Swords, UserCircle2, ChevronRight, Lock } from "lucide-react";
+import { CHAPTERS } from "@/lib/chapters";
 
-const MAX_HEARTS = 5;
+const XP_KEY = "arabeast_xp";
+function getStoredXp(): number {
+  if (typeof window === "undefined") return 0;
+  return parseInt(localStorage.getItem(XP_KEY) ?? "0", 10);
+}
 
-const HAPPY_LINES = [
-  "ممتاز! The curse weakens!",
-  "أحسنت! My memory returns!",
-  "نعم! Yes! You speak my language!",
-  "Wonderful! We grow closer to breaking the seal!",
-];
-
-const SAD_LINES = [
-  "لا لا لا… that is not right.",
-  "The sorcerer laughs… try again.",
-  "حاول مرة أخرى… do not give up.",
-  "Wrong… but the lamp still glows. Try again.",
+const SHOWCASE_WORDS = [
+  { arabic: "مرحبا",   transliteration: "marhaba",  english: "Hello" },
+  { arabic: "شكراً",   transliteration: "shukran",   english: "Thank you" },
+  { arabic: "أسد",     transliteration: "asad",      english: "Lion" },
+  { arabic: "قهوة",    transliteration: "qahwa",     english: "Coffee" },
+  { arabic: "صديق",    transliteration: "sadeeq",    english: "Friend" },
+  { arabic: "مدينة",   transliteration: "madina",    english: "City" },
 ];
 
 export default function HomePage() {
-  const [hearts, setHearts]   = useState(MAX_HEARTS);
-  const [xp, setXp]           = useState(0);
-  const [quizKey, setQuizKey] = useState(0);
-  const [gameOver, setGameOver] = useState(false);
-  const [language, setLanguage] = useState<"en" | "he">("en");
-
-  const [jinnState, setJinnState] = useState<JinnState>("idle");
-  const [learnedWords, setLearnedWords] = useState<string[]>([]);
-
-  const jinnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const setJinnTemporary = useCallback((state: JinnState, durationMs: number) => {
-    if (jinnTimerRef.current) clearTimeout(jinnTimerRef.current);
-    setJinnState(state);
-    jinnTimerRef.current = setTimeout(() => setJinnState("idle"), durationMs);
-  }, []);
-
-  useEffect(() => () => { if (jinnTimerRef.current) clearTimeout(jinnTimerRef.current); }, []);
-
-  // ── quiz callbacks ─────────────────────────────────────────────────────────
-
-  const handleQuizLoaded = useCallback((_target: VocabEntry) => {
-    setJinnTemporary("talking", 2200);
-  }, [setJinnTemporary]);
-
-  const handleXpChange = useCallback((newXp: number) => {
-    setXp((prev) => {
-      if (newXp > prev) setJinnTemporary("happy", 1800);
-      return newXp;
-    });
-  }, [setJinnTemporary]);
-
-  const handleHeartsChange = useCallback((newHearts: number) => {
-    setHearts((prev) => {
-      if (newHearts < prev) setJinnTemporary("sad", 2200);
-      return newHearts;
-    });
-  }, [setJinnTemporary]);
-
-  const handleOutOfHearts = useCallback(() => {
-    if (jinnTimerRef.current) clearTimeout(jinnTimerRef.current);
-    setJinnState("sad");
-    setGameOver(true);
-  }, []);
-
-  const handleCorrectAnswer = useCallback((word: VocabEntry) => {
-    setLearnedWords((prev) =>
-      prev.includes(word.standardArabic) ? prev : [...prev, word.standardArabic],
-    );
-  }, []);
-
-  const handleRestart = useCallback(() => {
-    setHearts(MAX_HEARTS);
-    setXp(0);
-    setQuizKey((k) => k + 1);
-    setGameOver(false);
-    setJinnState("talking");
-  }, []);
-
-  // ── jinn chat callback (from conversation panel) ───────────────────────────
-
-  const handleJinnStateChange = useCallback((state: "idle" | "talking" | "happy" | "sad") => {
-    if (jinnTimerRef.current) clearTimeout(jinnTimerRef.current);
-    setJinnState(state);
-  }, []);
+  const [xp] = useState(() => typeof window !== "undefined" ? getStoredXp() : 0);
+  const unlockedCount = CHAPTERS.filter((c) => c.xpRequired <= xp).length;
 
   return (
     <main className="min-h-screen flex flex-col">
-      {/* decorative stars */}
+      {/* stars */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden>
         {STARS.map((s, i) => (
-          <div
-            key={i}
-            className="absolute rounded-full bg-white"
-            style={{ top: s.top, left: s.left, width: s.size, height: s.size, opacity: s.opacity }}
-          />
+          <div key={i} className="absolute rounded-full bg-white"
+            style={{ top: s.top, left: s.left, width: s.size, height: s.size, opacity: s.opacity }} />
         ))}
       </div>
 
-      <div className="relative mx-auto w-full max-w-5xl flex flex-col gap-5 px-4 py-6">
+      <div className="relative mx-auto w-full max-w-4xl flex flex-col gap-12 px-5 py-8">
 
-        <Header xp={xp} hearts={hearts} streakLabel="3 days" maxHearts={MAX_HEARTS} />
-
-        <div className="flex flex-col md:flex-row gap-6 items-start">
-
-          {/* ── Jinn panel ── */}
-          <div className="w-full md:w-[42%] flex flex-col items-center gap-4">
-            <div className="w-full max-w-[260px] mx-auto aspect-[260/390]">
-              <JinnCharacter state={jinnState} />
+        {/* ── top nav ── */}
+        <nav className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="text-2xl">🕌</span>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400/70">Arabeast</p>
             </div>
-            <JinnChat
-              language={language}
-              learnedWords={learnedWords}
-              onLanguageChange={setLanguage}
-              onJinnStateChange={handleJinnStateChange}
-            />
+          </div>
+          <button
+            type="button"
+            className="flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold text-amber-300/60 hover:bg-white/5 transition"
+            title="Sign in coming soon"
+          >
+            <UserCircle2 className="h-4 w-4" />
+            Sign in
+          </button>
+        </nav>
+
+        {/* ── hero ── */}
+        <section className="flex flex-col sm:flex-row items-center gap-8">
+          <div className="flex-1 flex flex-col gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400/60 mb-2">
+                Learn Modern Standard Arabic
+              </p>
+              <h1 className="text-5xl sm:text-6xl font-black text-amber-50 leading-[1.05]">
+                Arabic<br />
+                <span style={{ color: "#d4a017" }}>unlocked.</span>
+              </h1>
+            </div>
+            <p className="text-base text-amber-200/55 leading-relaxed max-w-sm">
+              Build real vocabulary through stories, quizzes, and a talking Jinn who has waited 1,000 years for someone to speak to him.
+            </p>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/play/story"
+                className="rounded-2xl px-5 py-3 text-sm font-bold text-amber-900 transition hover:brightness-110"
+                style={{ background: "#d4a017" }}
+              >
+                Start Learning →
+              </Link>
+              <Link
+                href="/play/quiz"
+                className="rounded-2xl border border-white/10 px-5 py-3 text-sm font-semibold text-amber-300/70 hover:bg-white/5 transition"
+              >
+                Quick Quiz
+              </Link>
+            </div>
           </div>
 
-          {/* ── quiz panel ── */}
-          <div className="w-full md:flex-1">
-            <QuizCard
-              hearts={hearts}
-              xp={xp}
-              quizKey={quizKey}
-              onHeartsChange={handleHeartsChange}
-              onXpChange={handleXpChange}
-              onOutOfHearts={handleOutOfHearts}
-              onQuizLoaded={handleQuizLoaded}
-              onCorrectAnswer={handleCorrectAnswer}
-            />
+          {/* small jinn */}
+          <div className="flex-shrink-0 w-[140px] sm:w-[160px]" style={{ aspectRatio: "260/390" }}>
+            <JinnCharacter state="idle" />
           </div>
+        </section>
 
-        </div>
+        {/* ── word showcase ── */}
+        <section>
+          <p className="text-xs font-semibold uppercase tracking-widest text-amber-400/50 mb-3">
+            Words you&apos;ll learn
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {SHOWCASE_WORDS.map((w) => (
+              <div
+                key={w.arabic}
+                className="rounded-2xl px-4 py-3 flex flex-col gap-0.5"
+                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(212,160,23,0.12)" }}
+              >
+                <p
+                  className="text-2xl font-bold text-amber-100 leading-tight"
+                  style={{ fontFamily: "var(--font-noto-naskh), serif", direction: "rtl" }}
+                >
+                  {w.arabic}
+                </p>
+                <p className="text-xs text-amber-300/50 italic">{w.transliteration}</p>
+                <p className="text-xs font-semibold text-amber-200/70">{w.english}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── game modes ── */}
+        <section>
+          <p className="text-xs font-semibold uppercase tracking-widest text-amber-400/50 mb-3">
+            Game modes
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+            <Link
+              href="/play/story"
+              className="group flex flex-col gap-3 rounded-3xl p-5 transition hover:scale-[1.02]"
+              style={{
+                background: "linear-gradient(135deg, rgba(212,160,23,0.16) 0%, rgba(120,60,10,0.10) 100%)",
+                border: "1px solid rgba(212,160,23,0.3)",
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-xl"
+                  style={{ background: "rgba(212,160,23,0.2)", border: "1px solid rgba(212,160,23,0.25)" }}
+                >
+                  <BookOpen className="h-5 w-5 text-amber-400" />
+                </div>
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full text-amber-900" style={{ background: "#d4a017" }}>
+                  STORY
+                </span>
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-amber-50">Story Mode</h2>
+                <p className="text-sm text-amber-200/55 mt-0.5 leading-snug">
+                  5 chapters. Each one unlocks new vocabulary tied to Zafar&apos;s 1,000-year backstory.
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-amber-400/60 font-medium">
+                <span>{unlockedCount} / {CHAPTERS.length} chapters unlocked</span>
+                <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </Link>
+
+            <Link
+              href="/play/quiz"
+              className="group flex flex-col gap-3 rounded-3xl p-5 transition hover:scale-[1.02]"
+              style={{
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.09)",
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-xl"
+                  style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}
+                >
+                  <Swords className="h-5 w-5 text-amber-300/80" />
+                </div>
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full text-amber-900/80"
+                  style={{ background: "rgba(212,160,23,0.55)" }}>
+                  QUIZ
+                </span>
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-amber-50">Quick Quiz</h2>
+                <p className="text-sm text-amber-200/55 mt-0.5 leading-snug">
+                  All 36 words, random order, 5 hearts. Race for XP — no chapter required.
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-amber-400/60 font-medium">
+                <span>Unlimited · all categories</span>
+                <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </Link>
+          </div>
+        </section>
+
+        {/* ── chapter list ── */}
+        <section>
+          <p className="text-xs font-semibold uppercase tracking-widest text-amber-400/50 mb-3">
+            Story chapters
+          </p>
+          <div className="flex flex-col gap-1.5">
+            {CHAPTERS.map((chapter) => {
+              const unlocked = chapter.xpRequired <= xp;
+              return (
+                <Link
+                  key={chapter.id}
+                  href={unlocked ? `/play/story?chapter=${chapter.id}` : "#"}
+                  onClick={!unlocked ? (e) => e.preventDefault() : undefined}
+                  className={`flex items-center gap-4 rounded-2xl px-4 py-3 transition ${
+                    unlocked ? "hover:bg-white/5" : "cursor-not-allowed opacity-45"
+                  }`}
+                  style={{ border: "1px solid rgba(255,255,255,0.06)" }}
+                >
+                  <span className="text-xl w-7 text-center">{chapter.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-amber-100 truncate">{chapter.title}</p>
+                      {!unlocked && <Lock className="h-3 w-3 text-amber-500/40 flex-shrink-0" />}
+                    </div>
+                    <p className="text-xs text-amber-300/40">{chapter.subtitle}</p>
+                  </div>
+                  {unlocked ? (
+                    <span
+                      className="text-xs font-semibold rounded-full px-2.5 py-0.5 flex-shrink-0"
+                      style={{ background: `${chapter.color}25`, color: chapter.color }}
+                    >
+                      Play
+                    </span>
+                  ) : (
+                    <span className="text-xs text-amber-500/40 flex-shrink-0">{chapter.xpRequired} XP</span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* ── auth CTA ── */}
+        <section
+          className="flex flex-col sm:flex-row items-center gap-4 rounded-3xl px-6 py-5"
+          style={{
+            background: "rgba(255,255,255,0.03)",
+            border: "1px solid rgba(255,255,255,0.07)",
+          }}
+        >
+          <div className="flex-1">
+            <p className="font-bold text-amber-50 text-sm">Save your progress</p>
+            <p className="text-xs text-amber-200/45 mt-0.5">
+              Create an account to keep your XP, streak and chapter progress across devices.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="flex-shrink-0 flex items-center gap-2 rounded-xl border border-amber-400/25 px-4 py-2 text-sm font-semibold text-amber-300/60 hover:bg-white/5 transition"
+            title="Coming soon"
+          >
+            <UserCircle2 className="h-4 w-4" />
+            Sign up — coming soon
+          </button>
+        </section>
+
       </div>
-
-      <GameOverModal open={gameOver} onRestart={handleRestart} />
     </main>
   );
 }
 
-// static star positions (avoids hydration mismatch)
 const STARS = [
   { top: "4%",  left: "8%",  size: "2px",   opacity: 0.7 },
   { top: "8%",  left: "22%", size: "1.5px", opacity: 0.5 },
@@ -159,8 +274,6 @@ const STARS = [
   { top: "35%", left: "78%", size: "1px",   opacity: 0.6 },
   { top: "42%", left: "15%", size: "2px",   opacity: 0.3 },
   { top: "50%", left: "90%", size: "1.5px", opacity: 0.5 },
-  { top: "60%", left: "3%",  size: "1px",   opacity: 0.4 },
   { top: "72%", left: "48%", size: "2px",   opacity: 0.3 },
   { top: "85%", left: "70%", size: "1.5px", opacity: 0.5 },
-  { top: "92%", left: "25%", size: "1px",   opacity: 0.4 },
 ];

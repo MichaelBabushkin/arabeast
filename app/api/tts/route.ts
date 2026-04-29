@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
+import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
 
 export const JINN_VOICES = ["Charon", "Fenrir", "Orus", "Puck", "Kore", "Aoede", "Leda"] as const;
 export type JinnVoice = (typeof JINN_VOICES)[number];
 export const DEFAULT_VOICE: JinnVoice = "Charon";
+
+// In-memory cache: saves repeated phrases from burning quota (reset on server restart)
+const audioCache = new Map<string, Uint8Array>();
+
+function cacheKey(text: string, voice: string) {
+  return crypto.createHash("md5").update(`${voice}:${text}`).digest("hex");
+}
 
 function pcmToWav(base64: string, sampleRate = 24000): Buffer {
   const pcm = Buffer.from(base64, "base64");
@@ -15,8 +23,8 @@ function pcmToWav(base64: string, sampleRate = 24000): Buffer {
   header.write("WAVE", 8);
   header.write("fmt ", 12);
   header.writeUInt32LE(16, 16);
-  header.writeUInt16LE(1, 20);  // PCM format
-  header.writeUInt16LE(1, 22);  // mono
+  header.writeUInt16LE(1, 20);
+  header.writeUInt16LE(1, 22);
   header.writeUInt32LE(sampleRate, 24);
   header.writeUInt32LE(sampleRate * 2, 28);
   header.writeUInt16LE(2, 32);
@@ -24,6 +32,16 @@ function pcmToWav(base64: string, sampleRate = 24000): Buffer {
   header.write("data", 36);
   header.writeUInt32LE(pcm.length, 40);
   return Buffer.concat([header, pcm]);
+}
+
+function wavResponse(wav: Uint8Array) {
+  return new NextResponse(wav.buffer as ArrayBuffer, {
+    headers: {
+      "Content-Type": "audio/wav",
+      "Content-Length": String(wav.length),
+      "Cache-Control": "public, max-age=86400",
+    },
+  });
 }
 
 export async function POST(req: NextRequest) {
@@ -37,6 +55,13 @@ export async function POST(req: NextRequest) {
 
   const { text, voice = DEFAULT_VOICE } = body;
   if (!text?.trim()) return NextResponse.json({ error: "text is required" }, { status: 400 });
+
+  const key = cacheKey(text.trim(), voice);
+  const cached = audioCache.get(key);
+  if (cached) {
+    console.log("[TTS] cache hit:", text.slice(0, 30));
+    return wavResponse(cached);
+  }
 
   const ai = new GoogleGenAI({ apiKey });
 
@@ -55,16 +80,12 @@ export async function POST(req: NextRequest) {
     const audioData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
     if (!audioData) throw new Error("No audio data in response");
 
-    const wav = pcmToWav(audioData);
-    return new NextResponse(new Uint8Array(wav), {
-      headers: {
-        "Content-Type": "audio/wav",
-        "Content-Length": String(wav.length),
-        "Cache-Control": "no-store",
-      },
-    });
+    const wav = new Uint8Array(pcmToWav(audioData));
+    audioCache.set(key, wav);
+    console.log("[TTS] generated:", text.slice(0, 30), `(cache size: ${audioCache.size})`);
+    return wavResponse(wav);
   } catch (err) {
-    console.error("TTS error:", err);
+    console.error("[TTS] error:", err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "TTS failed" },
       { status: 500 },

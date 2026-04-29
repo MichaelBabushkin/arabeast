@@ -1,7 +1,10 @@
 import vocab from '@/data/modern-standard-arabic.json';
 
+export type VocabCategory = 'animals' | 'family' | 'food' | 'colors' | 'places';
+
 export type VocabEntry = {
   id: string;
+  category: VocabCategory;
   english: string;
   standardArabic: string;
   standardArabicTransliteration: string;
@@ -9,9 +12,10 @@ export type VocabEntry = {
   image?: string;
 };
 
-const vocabCache: VocabEntry[] = vocab;
+const vocabCache: VocabEntry[] = vocab as VocabEntry[];
 
-export function getVocabulary(): VocabEntry[] {
+export function getVocabulary(category?: VocabCategory): VocabEntry[] {
+  if (category) return vocabCache.filter((e) => e.category === category);
   return vocabCache;
 }
 
@@ -29,14 +33,14 @@ function shuffle<T>(arr: T[]): T[] {
   return copy;
 }
 
-export function getRandomQuiz(): QuizItem {
-  const list = getVocabulary();
-  if (list.length < 4) {
-    throw new Error('Need at least 4 vocab entries to build a quiz');
-  }
+export function getRandomQuiz(category?: VocabCategory): QuizItem {
+  const list = getVocabulary(category);
+  const all = getVocabulary();
+  if (list.length < 1) throw new Error('No vocab entries for this category');
+  if (all.length < 4) throw new Error('Need at least 4 vocab entries to build a quiz');
 
   const target = list[Math.floor(Math.random() * list.length)];
-  const distractors = shuffle(list.filter((entry) => entry.id !== target.id)).slice(0, 3);
+  const distractors = shuffle(all.filter((entry) => entry.id !== target.id)).slice(0, 3);
   const options = shuffle([target, ...distractors]);
 
   return { target, options };

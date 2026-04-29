@@ -146,3 +146,11 @@ npm run lint    # ESLint (zero warnings policy)
 - No user accounts or cross-session progress — Phase 2
 - Audio fields in JSON are empty — Phase 3 Whisper handles input; TTS via Web Speech API for output
 - Images are `placehold.co` placeholders — needs real illustrations
+
+## AI Agent Skills
+
+### Caveman Mode
+This repository supports "Caveman Mode" to drastically reduce token consumption during technical, code-heavy tasks. 
+- **Activate:** Tell the agent to "use caveman mode" or "activate caveman".
+- **Deactivate:** Tell the agent to "return to normal", "disable caveman", or "speak normally".
+- **Behavior:** When active, the AI must remove all pleasantries, hedging, and filler words. Use fragments, abbreviations, and symbols (e.g. `->`). Speak like a smart caveman.
