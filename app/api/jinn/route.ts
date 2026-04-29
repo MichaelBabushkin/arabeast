@@ -41,6 +41,7 @@ export type JinnRequest = {
   message: string;
   language?: "en" | "he";
   history?: JinnMessage[];
+  learnedWords?: string[];
 };
 
 export type JinnResponse = {
@@ -63,16 +64,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { message, language = "en", history = [] } = body;
+  const { message, language = "en", history = [], learnedWords = [] } = body;
   if (!message?.trim()) {
     return NextResponse.json({ error: "message is required" }, { status: 400 });
   }
 
   const ai = new GoogleGenAI({ apiKey });
 
+  const learnedContext =
+    learnedWords.length > 0
+      ? `\n\nThe player has already learned these Arabic words from the quiz: ${learnedWords.join("، ")}. Weave them naturally into your responses when relevant — reinforce them, use them in sentences, or connect them to the story.`
+      : "";
+
   const systemInstruction =
     SYSTEM_PROMPT +
-    `\n\nThe player's native language is: ${language === "he" ? "Hebrew (עברית)" : "English"}.`;
+    `\n\nThe player's native language is: ${language === "he" ? "Hebrew (עברית)" : "English"}.` +
+    learnedContext;
 
   const contents = [
     ...history.map((m) => ({ role: m.role, parts: [{ text: m.content }] })),

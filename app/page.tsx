@@ -1,14 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Volume2 } from "lucide-react";
 import GameOverModal from "@/components/GameOverModal";
 import Header from "@/components/Header";
 import JinnChat from "@/components/JinnChat";
 import QuizCard from "@/components/QuizCard";
 import JinnCharacter, { type JinnState } from "@/components/jinn/JinnCharacter";
-import type { JinnResponse } from "@/app/api/jinn/route";
-import { speakArabic } from "@/lib/speech";
 import type { VocabEntry } from "@/lib/vocab";
 
 const MAX_HEARTS = 5;
@@ -27,57 +24,42 @@ const SAD_LINES = [
   "Wrong… but the lamp still glows. Try again.",
 ];
 
-const IDLE_LINE = "I speak only in Arabic. Help me tell my story…";
-
 export default function HomePage() {
-  const [hearts, setHearts]     = useState(MAX_HEARTS);
-  const [xp, setXp]             = useState(0);
-  const [quizKey, setQuizKey]   = useState(0);
+  const [hearts, setHearts]   = useState(MAX_HEARTS);
+  const [xp, setXp]           = useState(0);
+  const [quizKey, setQuizKey] = useState(0);
   const [gameOver, setGameOver] = useState(false);
+  const [language, setLanguage] = useState<"en" | "he">("en");
 
-  const [jinnState, setJinnState]     = useState<JinnState>("talking");
-  const [jinnMessage, setJinnMessage] = useState(IDLE_LINE);
-  const [lastArabic, setLastArabic]   = useState("");
+  const [jinnState, setJinnState] = useState<JinnState>("idle");
+  const [learnedWords, setLearnedWords] = useState<string[]>([]);
 
   const jinnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const setJinnTemporary = useCallback((state: JinnState, message: string, durationMs: number) => {
+  const setJinnTemporary = useCallback((state: JinnState, durationMs: number) => {
     if (jinnTimerRef.current) clearTimeout(jinnTimerRef.current);
     setJinnState(state);
-    setJinnMessage(message);
-    jinnTimerRef.current = setTimeout(() => {
-      setJinnState("idle");
-      setJinnMessage(IDLE_LINE);
-    }, durationMs);
+    jinnTimerRef.current = setTimeout(() => setJinnState("idle"), durationMs);
   }, []);
 
   useEffect(() => () => { if (jinnTimerRef.current) clearTimeout(jinnTimerRef.current); }, []);
 
-  // ── callbacks ───────────────────────────────────────────────────────────────
+  // ── quiz callbacks ─────────────────────────────────────────────────────────
 
-  const handleQuizLoaded = useCallback((target: VocabEntry) => {
-    if (jinnTimerRef.current) clearTimeout(jinnTimerRef.current);
-    setJinnState("talking");
-    setJinnMessage(`What is the Arabic word for… ${target.english}?`);
-    jinnTimerRef.current = setTimeout(() => setJinnState("idle"), 2200);
-  }, []);
+  const handleQuizLoaded = useCallback((_target: VocabEntry) => {
+    setJinnTemporary("talking", 2200);
+  }, [setJinnTemporary]);
 
   const handleXpChange = useCallback((newXp: number) => {
     setXp((prev) => {
-      if (newXp > prev) {
-        const line = HAPPY_LINES[Math.floor(Math.random() * HAPPY_LINES.length)];
-        setJinnTemporary("happy", line, 1800);
-      }
+      if (newXp > prev) setJinnTemporary("happy", 1800);
       return newXp;
     });
   }, [setJinnTemporary]);
 
   const handleHeartsChange = useCallback((newHearts: number) => {
     setHearts((prev) => {
-      if (newHearts < prev) {
-        const line = SAD_LINES[Math.floor(Math.random() * SAD_LINES.length)];
-        setJinnTemporary("sad", line, 2200);
-      }
+      if (newHearts < prev) setJinnTemporary("sad", 2200);
       return newHearts;
     });
   }, [setJinnTemporary]);
@@ -85,24 +67,13 @@ export default function HomePage() {
   const handleOutOfHearts = useCallback(() => {
     if (jinnTimerRef.current) clearTimeout(jinnTimerRef.current);
     setJinnState("sad");
-    setJinnMessage("The curse tightens… but do not despair. Begin again.");
     setGameOver(true);
   }, []);
 
-  const handleJinnThinking = useCallback(() => {
-    if (jinnTimerRef.current) clearTimeout(jinnTimerRef.current);
-    setJinnState("talking");
-    setJinnMessage("Hmm… let me think…");
-  }, []);
-
-  const handleJinnResponse = useCallback((res: JinnResponse) => {
-    if (jinnTimerRef.current) clearTimeout(jinnTimerRef.current);
-    setJinnState(res.emotion);
-    const display = res.arabic
-      ? `${res.arabic} — ${res.reply}`
-      : res.reply;
-    setJinnMessage(display);
-    if (res.arabic) setLastArabic(res.arabic);
+  const handleCorrectAnswer = useCallback((word: VocabEntry) => {
+    setLearnedWords((prev) =>
+      prev.includes(word.standardArabic) ? prev : [...prev, word.standardArabic],
+    );
   }, []);
 
   const handleRestart = useCallback(() => {
@@ -111,12 +82,18 @@ export default function HomePage() {
     setQuizKey((k) => k + 1);
     setGameOver(false);
     setJinnState("talking");
-    setJinnMessage(IDLE_LINE);
+  }, []);
+
+  // ── jinn chat callback (from conversation panel) ───────────────────────────
+
+  const handleJinnStateChange = useCallback((state: "idle" | "talking" | "happy" | "sad") => {
+    if (jinnTimerRef.current) clearTimeout(jinnTimerRef.current);
+    setJinnState(state);
   }, []);
 
   return (
     <main className="min-h-screen flex flex-col">
-      {/* ── decorative stars ── */}
+      {/* decorative stars */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden>
         {STARS.map((s, i) => (
           <div
@@ -129,63 +106,20 @@ export default function HomePage() {
 
       <div className="relative mx-auto w-full max-w-5xl flex flex-col gap-5 px-4 py-6">
 
-        {/* ── header ── */}
         <Header xp={xp} hearts={hearts} streakLabel="3 days" maxHearts={MAX_HEARTS} />
 
-        {/* ── game scene ── */}
         <div className="flex flex-col md:flex-row gap-6 items-start">
 
           {/* ── Jinn panel ── */}
           <div className="w-full md:w-[42%] flex flex-col items-center gap-4">
-            <div className="w-full max-w-[280px] mx-auto aspect-[260/390]">
+            <div className="w-full max-w-[260px] mx-auto aspect-[260/390]">
               <JinnCharacter state={jinnState} />
             </div>
-
-            {/* dialogue box */}
-            <div
-              className="w-full rounded-2xl px-5 py-4 text-center transition-all duration-500"
-              style={{
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(212,160,23,0.25)",
-                backdropFilter: "blur(8px)",
-                boxShadow: "0 0 24px rgba(212,160,23,0.08)",
-              }}
-            >
-              {/* ornamental top line */}
-              <div className="flex items-center gap-2 mb-3 justify-center opacity-40">
-                <div className="h-px flex-1 bg-amber-400" />
-                <span className="text-amber-400 text-xs">✦</span>
-                <div className="h-px flex-1 bg-amber-400" />
-              </div>
-              <p
-                className="text-sm leading-relaxed transition-opacity duration-300"
-                style={{ color: "#f0e8d0", fontStyle: "italic" }}
-              >
-                {jinnMessage}
-              </p>
-              <div className="flex items-center gap-2 mt-3 justify-center">
-                <div className="h-px flex-1 bg-amber-400 opacity-40" />
-                {lastArabic && (
-                  <button
-                    type="button"
-                    onClick={() => speakArabic(lastArabic)}
-                    className="flex items-center gap-1 rounded-full border border-amber-400/30 px-2 py-0.5 text-xs text-amber-400/70 hover:border-amber-400/60 hover:text-amber-300 transition"
-                    aria-label="Replay Arabic audio"
-                  >
-                    <Volume2 className="h-3 w-3" />
-                    replay
-                  </button>
-                )}
-                {!lastArabic && <span className="text-amber-400 text-xs opacity-40">✦</span>}
-                <div className="h-px flex-1 bg-amber-400 opacity-40" />
-              </div>
-            </div>
-
-            {/* chat input */}
             <JinnChat
-              language="en"
-              onJinnThinking={handleJinnThinking}
-              onJinnResponse={handleJinnResponse}
+              language={language}
+              learnedWords={learnedWords}
+              onLanguageChange={setLanguage}
+              onJinnStateChange={handleJinnStateChange}
             />
           </div>
 
@@ -199,8 +133,10 @@ export default function HomePage() {
               onXpChange={handleXpChange}
               onOutOfHearts={handleOutOfHearts}
               onQuizLoaded={handleQuizLoaded}
+              onCorrectAnswer={handleCorrectAnswer}
             />
           </div>
+
         </div>
       </div>
 
