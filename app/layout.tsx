@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { Noto_Naskh_Arabic } from 'next/font/google';
+import Providers from '@/components/Providers';
 import './globals.css';
 
 const notoNaskh = Noto_Naskh_Arabic({
@@ -18,7 +19,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${notoNaskh.variable}`}>
       <body className="min-h-screen">
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useSession, signOut } from "next-auth/react";
 import JinnCharacter from "@/components/jinn/JinnCharacter";
-import { BookOpen, Swords, UserCircle2, ChevronRight, Lock } from "lucide-react";
+import { BookOpen, Swords, UserCircle2, ChevronRight, Lock, LogOut } from "lucide-react";
 import { CHAPTERS } from "@/lib/chapters";
 
 const XP_KEY = "arabeast_xp";
@@ -22,6 +23,7 @@ const SHOWCASE_WORDS = [
 ];
 
 export default function HomePage() {
+  const { data: session } = useSession();
   const [xp] = useState(() => typeof window !== "undefined" ? getStoredXp() : 0);
   const unlockedCount = CHAPTERS.filter((c) => c.xpRequired <= xp).length;
 
@@ -41,18 +43,29 @@ export default function HomePage() {
         <nav className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <span className="text-2xl">🕌</span>
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400/70">Arabeast</p>
-            </div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400/70">Arabeast</p>
           </div>
-          <button
-            type="button"
-            className="flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold text-amber-300/60 hover:bg-white/5 transition"
-            title="Sign in coming soon"
-          >
-            <UserCircle2 className="h-4 w-4" />
-            Sign in
-          </button>
+          {session ? (
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-amber-300/50">{session.user?.name ?? session.user?.email}</span>
+              <button
+                type="button"
+                onClick={() => signOut()}
+                className="flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-amber-300/50 hover:bg-white/5 transition"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                Sign out
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/signin"
+              className="flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold text-amber-300/60 hover:bg-white/5 transition"
+            >
+              <UserCircle2 className="h-4 w-4" />
+              Sign in
+            </Link>
+          )}
         </nav>
 
         {/* ── hero ── */}
@@ -232,29 +245,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── auth CTA ── */}
-        <section
-          className="flex flex-col sm:flex-row items-center gap-4 rounded-3xl px-6 py-5"
-          style={{
-            background: "rgba(255,255,255,0.03)",
-            border: "1px solid rgba(255,255,255,0.07)",
-          }}
-        >
-          <div className="flex-1">
-            <p className="font-bold text-amber-50 text-sm">Save your progress</p>
-            <p className="text-xs text-amber-200/45 mt-0.5">
-              Create an account to keep your XP, streak and chapter progress across devices.
-            </p>
-          </div>
-          <button
-            type="button"
-            className="flex-shrink-0 flex items-center gap-2 rounded-xl border border-amber-400/25 px-4 py-2 text-sm font-semibold text-amber-300/60 hover:bg-white/5 transition"
-            title="Coming soon"
-          >
-            <UserCircle2 className="h-4 w-4" />
-            Sign up — coming soon
-          </button>
-        </section>
 
       </div>
     </main>

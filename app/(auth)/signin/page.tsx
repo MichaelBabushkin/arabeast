@@ -71,8 +71,8 @@ export default function SignInPage() {
         </div>
 
         {/* Email/password */}
-        <form onSubmit={handleCredentials} className="space-y-3">
-          <div className="space-y-2">
+        <form onSubmit={handleCredentials} className="space-y-4">
+          <div className="space-y-3">
             <input
               type="email"
               value={email}

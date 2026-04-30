@@ -8,8 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx --max-warnings=0",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:push": "node --env-file=.env.local ./node_modules/.bin/drizzle-kit push",
+    "db:studio": "node --env-file=.env.local ./node_modules/.bin/drizzle-kit studio"
   },
   "keywords": [],
   "author": "",

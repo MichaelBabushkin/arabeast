@@ -80,8 +80,8 @@ export default function SignUpPage() {
           <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.08)" }} />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="space-y-2">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-3">
             <input
               type="text"
               value={name}
