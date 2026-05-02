@@ -1,10 +1,10 @@
 import {
-  boolean,
   integer,
   pgTable,
   primaryKey,
   text,
   timestamp,
+  unique,
 } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "next-auth/adapters";
 
@@ -57,7 +57,7 @@ export const wordProgress = pgTable("word_progress", {
   timesWrong:   integer("times_wrong").notNull().default(0),
   lastSeenAt:   timestamp("last_seen_at").notNull().defaultNow(),
   nextReviewAt: timestamp("next_review_at").notNull().defaultNow(),
-});
+}, (t) => [unique("word_progress_user_word").on(t.userId, t.wordId)]);
 
 export const userProgress = pgTable("user_progress", {
   userId:         text("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),

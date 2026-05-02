@@ -8,25 +8,18 @@ import Header from "@/components/Header";
 import JinnChat from "@/components/JinnChat";
 import QuizCard from "@/components/QuizCard";
 import JinnCharacter, { type JinnState } from "@/components/jinn/JinnCharacter";
+import { useProgress } from "@/lib/useProgress";
 import type { VocabEntry } from "@/lib/vocab";
 
 const MAX_HEARTS = 5;
-const XP_KEY = "arabeast_xp";
-
-function loadXp() {
-  if (typeof window === "undefined") return 0;
-  return parseInt(localStorage.getItem(XP_KEY) ?? "0", 10);
-}
-function saveXp(xp: number) {
-  if (typeof window !== "undefined") localStorage.setItem(XP_KEY, String(xp));
-}
 
 export default function QuizPage() {
-  const [hearts, setHearts]     = useState(MAX_HEARTS);
-  const [xp, setXp]             = useState(() => loadXp());
-  const [quizKey, setQuizKey]   = useState(0);
-  const [gameOver, setGameOver] = useState(false);
-  const [language, setLanguage] = useState<"en" | "he">("en");
+  const { progress, addXp } = useProgress();
+
+  const [hearts, setHearts]       = useState(MAX_HEARTS);
+  const [quizKey, setQuizKey]     = useState(0);
+  const [gameOver, setGameOver]   = useState(false);
+  const [language, setLanguage]   = useState<"en" | "he">("en");
   const [jinnState, setJinnState] = useState<JinnState>("idle");
   const [learnedWords, setLearnedWords] = useState<string[]>([]);
 
@@ -39,14 +32,9 @@ export default function QuizPage() {
   }, []);
 
   const handleXpChange = useCallback((newXp: number) => {
-    setXp((prev) => {
-      if (newXp > prev) {
-        saveXp(newXp);
-        setJinnTemporary("happy", 1800);
-      }
-      return newXp;
-    });
-  }, [setJinnTemporary]);
+    if (newXp > progress.xp) setJinnTemporary("happy", 1800);
+    addXp(newXp);
+  }, [progress.xp, addXp, setJinnTemporary]);
 
   const handleHeartsChange = useCallback((newHearts: number) => {
     setHearts((prev) => {
@@ -65,7 +53,12 @@ export default function QuizPage() {
     setLearnedWords((prev) =>
       prev.includes(word.standardArabic) ? prev : [...prev, word.standardArabic],
     );
-  }, []);
+    addXp(progress.xp + 10, word, true);
+  }, [progress.xp, addXp]);
+
+  const handleWrongAnswer = useCallback((word: VocabEntry) => {
+    addXp(progress.xp, word, false);
+  }, [progress.xp, addXp]);
 
   const handleRestart = useCallback(() => {
     setHearts(MAX_HEARTS);
@@ -79,30 +72,25 @@ export default function QuizPage() {
     setJinnState(state);
   }, []);
 
+  const streakLabel = progress.streakDays > 0 ? `${progress.streakDays} day${progress.streakDays !== 1 ? "s" : ""}` : "–";
+
   return (
     <main className="min-h-screen flex flex-col">
       <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden>
         {STARS.map((s, i) => (
-          <div
-            key={i}
-            className="absolute rounded-full bg-white"
-            style={{ top: s.top, left: s.left, width: s.size, height: s.size, opacity: s.opacity }}
-          />
+          <div key={i} className="absolute rounded-full bg-white"
+            style={{ top: s.top, left: s.left, width: s.size, height: s.size, opacity: s.opacity }} />
         ))}
       </div>
 
       <div className="relative mx-auto w-full max-w-5xl flex flex-col gap-5 px-4 py-6">
-
         <div className="flex items-center gap-3">
-          <Link
-            href="/"
-            className="flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-1.5 text-xs font-semibold text-amber-300/60 hover:bg-white/5 transition"
-          >
+          <Link href="/" className="flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-1.5 text-xs font-semibold text-amber-300/60 hover:bg-white/5 transition">
             <ArrowLeft className="h-3.5 w-3.5" />
             Menu
           </Link>
           <div className="flex-1">
-            <Header xp={xp} hearts={hearts} streakLabel="3 days" maxHearts={MAX_HEARTS} />
+            <Header xp={progress.xp} hearts={hearts} streakLabel={streakLabel} maxHearts={MAX_HEARTS} />
           </div>
         </div>
 
@@ -122,13 +110,14 @@ export default function QuizPage() {
           <div className="w-full md:flex-1">
             <QuizCard
               hearts={hearts}
-              xp={xp}
+              xp={progress.xp}
               quizKey={quizKey}
               onHeartsChange={handleHeartsChange}
               onXpChange={handleXpChange}
               onOutOfHearts={handleOutOfHearts}
               onQuizLoaded={() => setJinnTemporary("talking", 2200)}
               onCorrectAnswer={handleCorrectAnswer}
+              onWrongAnswer={handleWrongAnswer}
             />
           </div>
         </div>

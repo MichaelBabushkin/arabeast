@@ -10,18 +10,10 @@ import QuizCard from "@/components/QuizCard";
 import GameOverModal from "@/components/GameOverModal";
 import { CHAPTERS, type Chapter } from "@/lib/chapters";
 import type { VocabEntry } from "@/lib/vocab";
+import { useProgress } from "@/lib/useProgress";
 import { Sparkles } from "lucide-react";
 
 const MAX_HEARTS = 5;
-const XP_KEY = "arabeast_xp";
-
-function loadXp(): number {
-  if (typeof window === "undefined") return 0;
-  return parseInt(localStorage.getItem(XP_KEY) ?? "0", 10);
-}
-function saveXp(xp: number) {
-  if (typeof window !== "undefined") localStorage.setItem(XP_KEY, String(xp));
-}
 
 // ── Chapter selection screen ────────────────────────────────────────────────
 function ChapterSelect({ xp, onSelect }: { xp: number; onSelect: (c: Chapter) => void }) {
@@ -75,7 +67,8 @@ function StoryPageInner() {
   const searchParams = useSearchParams();
   const initialChapterId = searchParams.get("chapter");
 
-  const [xp, setXp]               = useState(() => loadXp());
+  const { progress, addXp, completeChapter } = useProgress();
+  const xp = progress.xp;
   const [hearts, setHearts]        = useState(MAX_HEARTS);
   const [quizKey, setQuizKey]      = useState(0);
   const [gameOver, setGameOver]    = useState(false);
@@ -122,14 +115,9 @@ function StoryPageInner() {
   };
 
   const handleXpChange = useCallback((newXp: number) => {
-    setXp((prev) => {
-      if (newXp > prev) {
-        saveXp(newXp);
-        setJinnTemporary("happy", 1800);
-      }
-      return newXp;
-    });
-  }, [setJinnTemporary]);
+    if (newXp > xp) setJinnTemporary("happy", 1800);
+    addXp(newXp);
+  }, [xp, addXp, setJinnTemporary]);
 
   const handleHeartsChange = useCallback((newHearts: number) => {
     setHearts((prev) => {
@@ -149,7 +137,8 @@ function StoryPageInner() {
       prev.includes(word.standardArabic) ? prev : [...prev, word.standardArabic],
     );
     setQuizCount((n) => n + 1);
-  }, []);
+    addXp(xp + 10, word, true);
+  }, [xp, addXp]);
 
   const handleRestart = useCallback(() => {
     setHearts(MAX_HEARTS);
