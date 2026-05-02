@@ -1,0 +1,13 @@
+{
+  "bodyShape": "Sleek, petite fennec fox sitting on a tiny, tattered magic carpet.",
+  "skinTone": "#fde68a",
+  "primaryColor": "#d97706",
+  "accentColor": "#fbbf24",
+  "hair": "Sandy fur with intricate henna-like dark brown patterns etched into it.",
+  "clothing": "No traditional clothes, but wears a glowing purple gem amulet and carries an oversized, ink-stained calligraphy quill.",
+  "distinguishingFeatures": "Unnaturally large ears that emit a soft golden magical glow. A bushy tail that curls gracefully.",
+  "idleAnimation": "Gently bobs up and down on her hovering magic carpet, occasionally swishing her bushy tail.",
+  "talkingAnimation": "Leans forward with a sly grin, pointing her oversized quill assertively while her glowing ears twitch.",
+  "happyAnimation": "Does a quick mid-air flip on her carpet, scattering golden magical sparkles, landing with a smug pose.",
+  "sadAnimation": "Ears droop dramatically, carpet sinks lower to the ground, and she hides her face behind her large bushy tail."
+}

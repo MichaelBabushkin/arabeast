@@ -1,0 +1,72 @@
+[
+  {
+    "id": "qamar-ch-1",
+    "number": 1,
+    "title": "The Desert Mathematics",
+    "titleArabic": "رياضيات الصحراء",
+    "subtitle": "Counting the Dunes",
+    "category": "numbers",
+    "icon": "🔢",
+    "color": "#f59e0b",
+    "xpRequired": 500,
+    "storyContext": "Qamar challenges the player to a game of wits. Before she shares her stolen magic, the player must prove they can count the grains of sand—or at least the basic numbers.",
+    "characterId": "qamar",
+    "openingMonologue": "Oh, another traveler? Zafar must have sent you. Before I share my stolen magic, let's see if you can even count the dunes. Learn these numbers (أرقام - arqām), and maybe I won't trick you today!"
+  },
+  {
+    "id": "qamar-ch-2",
+    "number": 2,
+    "title": "The Fox's Etiquette",
+    "titleArabic": "آداب الثعلب",
+    "subtitle": "Words of Courtesy",
+    "category": "greetings",
+    "icon": "👋",
+    "color": "#10b981",
+    "xpRequired": 650,
+    "storyContext": "Qamar is a trickster, but even tricksters have rules. She teaches the player how to properly greet friends and foes in the desert.",
+    "characterId": "qamar",
+    "openingMonologue": "You survived the numbers, but your manners are atrocious! Even a desert fox knows how to properly greet (تحية - taḥiyya) a rival. Let me teach you some basic courtesy before you embarrass us both."
+  },
+  {
+    "id": "qamar-ch-3",
+    "number": 3,
+    "title": "Anatomy of a Trickster",
+    "titleArabic": "تشريح المخادع",
+    "subtitle": "Parts of the Body",
+    "category": "body",
+    "icon": "👁️",
+    "color": "#ef4444",
+    "xpRequired": 800,
+    "storyContext": "Qamar points out the player's physical flaws compared to her magnificent glowing ears, teaching body parts in the process.",
+    "characterId": "qamar",
+    "openingMonologue": "Look at you—your ears are so small and your eyes lack any magical glow! Still, I suppose you need to know the parts of the body (جسم - jism) to cast a proper spell. Pay attention, human!"
+  },
+  {
+    "id": "qamar-ch-4",
+    "number": 4,
+    "title": "Secrets of the Sands",
+    "titleArabic": "أسرار الرمال",
+    "subtitle": "Elements of Nature",
+    "category": "nature",
+    "icon": "🌵",
+    "color": "#3b82f6",
+    "xpRequired": 950,
+    "storyContext": "Qamar reveals the elemental magic of Al-Rashid, teaching the vocabulary of nature that the ancient sorcerers used to control the environment.",
+    "characterId": "qamar",
+    "openingMonologue": "The sorcerers of Al-Rashid didn't just read books; they commanded the very elements of nature (طبيعة - ṭabīʿa). If you want to survive the desert, you must learn the names of the sun, moon, and fire."
+  },
+  {
+    "id": "qamar-ch-5",
+    "number": 5,
+    "title": "The Verbs of Power",
+    "titleArabic": "أفعال القوة",
+    "subtitle": "Words of Action",
+    "category": "verbs",
+    "icon": "⚡",
+    "color": "#8b5cf6",
+    "xpRequired": 1100,
+    "storyContext": "Qamar finally decides to share the true words of action. She teaches the player essential verbs, the core of any magical incantation.",
+    "characterId": "qamar",
+    "openingMonologue": "We have reached the true core of magic: action! To do anything in this world, you must master the verbs (أفعال - afʿāl) of power. Learn these, and you might actually be of use to me."
+  }
+]

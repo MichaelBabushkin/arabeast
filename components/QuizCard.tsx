@@ -18,6 +18,7 @@ type QuizCardProps = {
   onOutOfHearts: () => void;
   onQuizLoaded?: (target: VocabEntry) => void;
   onCorrectAnswer?: (word: VocabEntry) => void;
+  onWrongAnswer?: (word: VocabEntry) => void;
 };
 
 export default function QuizCard({
@@ -30,6 +31,7 @@ export default function QuizCard({
   onOutOfHearts,
   onQuizLoaded,
   onCorrectAnswer,
+  onWrongAnswer,
 }: QuizCardProps) {
   const [quiz, setQuiz] = useState<QuizItem | null>(null);
   const [loading, setLoading] = useState(false);
@@ -82,6 +84,7 @@ export default function QuizCard({
       onXpChange(xp + 10);
       onCorrectAnswer?.(option);
     } else {
+      onWrongAnswer?.(option);
       const nextHearts = Math.max(0, hearts - 1);
       onHeartsChange(nextHearts);
       if (nextHearts <= 0) {

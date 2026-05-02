@@ -1,17 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
+import { useProgress } from "@/lib/useProgress";
 import JinnCharacter from "@/components/jinn/JinnCharacter";
 import { BookOpen, Swords, UserCircle2, ChevronRight, Lock, LogOut } from "lucide-react";
 import { CHAPTERS } from "@/lib/chapters";
-
-const XP_KEY = "arabeast_xp";
-function getStoredXp(): number {
-  if (typeof window === "undefined") return 0;
-  return parseInt(localStorage.getItem(XP_KEY) ?? "0", 10);
-}
 
 const SHOWCASE_WORDS = [
   { arabic: "مرحبا",   transliteration: "marhaba",  english: "Hello" },
@@ -24,8 +18,8 @@ const SHOWCASE_WORDS = [
 
 export default function HomePage() {
   const { data: session } = useSession();
-  const [xp] = useState(() => typeof window !== "undefined" ? getStoredXp() : 0);
-  const unlockedCount = CHAPTERS.filter((c) => c.xpRequired <= xp).length;
+  const { progress } = useProgress();
+  const unlockedCount = CHAPTERS.filter((c) => c.xpRequired <= progress.xp).length;
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -210,7 +204,7 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col gap-1.5">
             {CHAPTERS.map((chapter) => {
-              const unlocked = chapter.xpRequired <= xp;
+              const unlocked = chapter.xpRequired <= progress.xp;
               return (
                 <Link
                   key={chapter.id}
