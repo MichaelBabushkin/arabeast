@@ -14,7 +14,10 @@ function SignInForm() {
 
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError]       = useState(urlError ? "Invalid credentials." : "");
+  const [error, setError]       = useState(
+    urlError === "Configuration" ? "Server configuration error — please try again later." :
+    urlError ? "Incorrect email or password." : ""
+  );
   const [loading, setLoading]   = useState(false);
 
   const handleCredentials = async (e: React.FormEvent) => {
