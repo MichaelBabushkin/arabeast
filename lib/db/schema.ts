@@ -66,3 +66,11 @@ export const userProgress = pgTable("user_progress", {
   lastPlayedAt:   timestamp("last_played_at"),
   completedChapters: text("completed_chapters").array().notNull().default([]),
 });
+
+export const ttsLog = pgTable("tts_log", {
+  id:        text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  chars:     integer("chars").notNull(),
+  voice:     text("voice").notNull(),
+  cached:    integer("cached").notNull().default(0), // 0 = api call, 1 = cache hit
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Send, Volume2 } from "lucide-react";
 import type { JinnMessage, JinnResponse } from "@/app/api/jinn/route";
-import { JINN_VOICES, type JinnVoice } from "@/app/api/tts/route";
+import { JINN_VOICES, type JinnVoice } from "@/lib/tts";
 import { getJinnVoice, setJinnVoice, speakJinn } from "@/lib/speech";
 import MicInput from "@/components/MicInput";
 
