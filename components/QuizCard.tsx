@@ -6,7 +6,6 @@ import type { QuizItem, VocabCategory, VocabEntry } from "@/lib/vocab";
 import { speakArabic } from "@/lib/speech";
 import { RefreshCw, Volume2 } from "lucide-react";
 
-const MAX_HEARTS = 5;
 
 type QuizCardProps = {
   hearts: number;

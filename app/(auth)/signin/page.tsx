@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, type FormEvent } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -20,7 +20,7 @@ function SignInForm() {
   );
   const [loading, setLoading]   = useState(false);
 
-  const handleCredentials = async (e: React.FormEvent) => {
+  const handleCredentials = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);

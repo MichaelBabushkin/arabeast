@@ -4,8 +4,10 @@ import { useCallback, useEffect, useRef, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, ChevronRight, Lock } from "lucide-react";
-import JinnCharacter, { type JinnState } from "@/components/jinn/JinnCharacter";
+import JinnCharacter from "@/components/jinn/JinnCharacter";
 import JinnChat from "@/components/JinnChat";
+import QamarCharacter from "@/components/qamar/QamarCharacter";
+import QamarChat from "@/components/QamarChat";
 import QuizCard from "@/components/QuizCard";
 import GameOverModal from "@/components/GameOverModal";
 import { CHAPTERS, type Chapter } from "@/lib/chapters";
@@ -67,13 +69,14 @@ function StoryPageInner() {
   const searchParams = useSearchParams();
   const initialChapterId = searchParams.get("chapter");
 
-  const { progress, addXp, completeChapter } = useProgress();
+  const { progress, addXp } = useProgress();
   const xp = progress.xp;
   const [hearts, setHearts]        = useState(MAX_HEARTS);
   const [quizKey, setQuizKey]      = useState(0);
   const [gameOver, setGameOver]    = useState(false);
   const [language, setLanguage]    = useState<"en" | "he">("en");
-  const [jinnState, setJinnState]  = useState<JinnState>("idle");
+  type CharacterState = "idle" | "talking" | "happy" | "sad";
+  const [characterState, setCharacterState] = useState<CharacterState>("idle");
   const [learnedWords, setLearnedWords] = useState<string[]>([]);
   const [phase, setPhase]          = useState<"select" | "story" | "quiz">("select");
   const [activeChapter, setActiveChapter] = useState<Chapter | null>(null);
@@ -81,10 +84,10 @@ function StoryPageInner() {
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const setJinnTemporary = useCallback((state: JinnState, ms: number) => {
+  const setCharacterTemporary = useCallback((state: CharacterState, ms: number) => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    setJinnState(state);
-    timerRef.current = setTimeout(() => setJinnState("idle"), ms);
+    setCharacterState(state);
+    timerRef.current = setTimeout(() => setCharacterState("idle"), ms);
   }, []);
 
   // Auto-select chapter from URL param
@@ -94,9 +97,8 @@ function StoryPageInner() {
     if (chapter && chapter.xpRequired <= xp) {
       setActiveChapter(chapter);
       setPhase("story");
-      setJinnTemporary("talking", 2500);
+      setCharacterTemporary("talking", 2500);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSelectChapter = (chapter: Chapter) => {
@@ -105,30 +107,30 @@ function StoryPageInner() {
     setHearts(MAX_HEARTS);
     setQuizCount(0);
     setLearnedWords([]);
-    setJinnTemporary("talking", 2500);
+    setCharacterTemporary("talking", 2500);
   };
 
   const handleStartQuiz = () => {
     setPhase("quiz");
     setQuizKey((k) => k + 1);
-    setJinnTemporary("talking", 1800);
+    setCharacterTemporary("talking", 1800);
   };
 
   const handleXpChange = useCallback((newXp: number) => {
-    if (newXp > xp) setJinnTemporary("happy", 1800);
+    if (newXp > xp) setCharacterTemporary("happy", 1800);
     addXp(newXp);
-  }, [xp, addXp, setJinnTemporary]);
+  }, [xp, addXp, setCharacterTemporary]);
 
   const handleHeartsChange = useCallback((newHearts: number) => {
     setHearts((prev) => {
-      if (newHearts < prev) setJinnTemporary("sad", 2200);
+      if (newHearts < prev) setCharacterTemporary("sad", 2200);
       return newHearts;
     });
-  }, [setJinnTemporary]);
+  }, [setCharacterTemporary]);
 
   const handleOutOfHearts = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    setJinnState("sad");
+    setCharacterState("sad");
     setGameOver(true);
   }, []);
 
@@ -144,18 +146,18 @@ function StoryPageInner() {
     setHearts(MAX_HEARTS);
     setQuizKey((k) => k + 1);
     setGameOver(false);
-    setJinnState("talking");
+    setCharacterState("talking");
   }, []);
 
-  const handleJinnStateChange = useCallback((state: JinnState) => {
+  const handleCharacterStateChange = useCallback((state: CharacterState) => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    setJinnState(state);
+    setCharacterState(state);
   }, []);
 
   const handleBackToSelect = () => {
     setPhase("select");
     setActiveChapter(null);
-    setJinnState("idle");
+    setCharacterState("idle");
   };
 
   return (
@@ -236,15 +238,31 @@ function StoryPageInner() {
               {/* jinn panel */}
               <div className="w-full md:w-[42%] flex flex-col items-center gap-4">
                 <div className="w-full max-w-[260px] mx-auto aspect-[260/390]">
-                  <JinnCharacter state={jinnState} />
+                  {activeChapter.characterId === "qamar" ? (
+                    <QamarCharacter state={characterState} />
+                  ) : (
+                    <JinnCharacter state={characterState} />
+                  )}
                 </div>
-                <JinnChat
-                  language={language}
-                  learnedWords={learnedWords}
-                  onLanguageChange={setLanguage}
-                  onJinnStateChange={handleJinnStateChange}
-                  storyContext={activeChapter.storyContext}
-                />
+                {activeChapter.characterId === "qamar" ? (
+                  <QamarChat
+                    language={language}
+                    learnedWords={learnedWords}
+                    onLanguageChange={setLanguage}
+                    onQamarStateChange={handleCharacterStateChange}
+                    storyContext={activeChapter.storyContext}
+                    initialMonologue={activeChapter.openingMonologue}
+                  />
+                ) : (
+                  <JinnChat
+                    language={language}
+                    learnedWords={learnedWords}
+                    onLanguageChange={setLanguage}
+                    onJinnStateChange={handleCharacterStateChange}
+                    storyContext={activeChapter.storyContext}
+                    initialMonologue={activeChapter.openingMonologue}
+                  />
+                )}
               </div>
 
               {/* right panel */}
@@ -279,7 +297,7 @@ function StoryPageInner() {
                     onHeartsChange={handleHeartsChange}
                     onXpChange={handleXpChange}
                     onOutOfHearts={handleOutOfHearts}
-                    onQuizLoaded={() => setJinnTemporary("talking", 2200)}
+                    onQuizLoaded={() => setCharacterTemporary("talking", 2200)}
                     onCorrectAnswer={handleCorrectAnswer}
                   />
                 )}
