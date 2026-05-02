@@ -1,4 +1,4 @@
-import type { JinnVoice } from "@/app/api/tts/route";
+import type { JinnVoice } from "@/lib/tts";
 
 let activeVoice: JinnVoice = "Charon";
 let activeAudio: HTMLAudioElement | null = null;
