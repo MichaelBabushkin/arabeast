@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import crypto from "crypto";
+import { db } from "@/lib/db/client";
+import { ttsLog } from "@/lib/db/schema";
 
 export const dynamic = "force-dynamic";
 
-export const JINN_VOICES = ["Charon", "Fenrir", "Orus", "Puck", "Kore", "Aoede", "Leda"] as const;
-export type JinnVoice = (typeof JINN_VOICES)[number];
-export const DEFAULT_VOICE: JinnVoice = "Charon";
+import { JINN_VOICES, DEFAULT_VOICE } from "@/lib/tts";
+export type { JinnVoice } from "@/lib/tts";
+export { JINN_VOICES };
 
 // In-memory cache: saves repeated phrases from burning quota (reset on server restart)
 const audioCache = new Map<string, Uint8Array>();
@@ -60,6 +62,7 @@ export async function POST(req: NextRequest) {
   const cached = audioCache.get(key);
   if (cached) {
     console.log("[TTS] cache hit:", text.slice(0, 30));
+    db.insert(ttsLog).values({ chars: text.trim().length, voice, cached: 1 }).catch(() => {});
     return wavResponse(cached);
   }
 
@@ -82,6 +85,7 @@ export async function POST(req: NextRequest) {
 
     const wav = new Uint8Array(pcmToWav(audioData));
     audioCache.set(key, wav);
+    db.insert(ttsLog).values({ chars: text.trim().length, voice, cached: 0 }).catch(() => {});
     console.log("[TTS] generated:", text.slice(0, 30), `(cache size: ${audioCache.size})`);
     return wavResponse(wav);
   } catch (err) {
