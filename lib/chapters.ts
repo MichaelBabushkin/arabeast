@@ -1,4 +1,6 @@
 import type { VocabCategory } from './vocab';
+import zafarIntros from '@/data/chapter-intros.json';
+import qamarChaptersData from '@/data/qamar-chapters.json';
 
 export type Chapter = {
   id: string;
@@ -11,6 +13,8 @@ export type Chapter = {
   color: string;
   xpRequired: number;
   storyContext: string;
+  characterId: "zafar" | "qamar";
+  openingMonologue: string;
 };
 
 export const CHAPTERS: Chapter[] = [
@@ -26,6 +30,8 @@ export const CHAPTERS: Chapter[] = [
     xpRequired: 0,
     storyContext:
       'The lamp was once kept in a great desert palace surrounded by exotic animals. The Jinn remembers them fondly — lions that guarded the gates, horses that carried princes, birds that sang at dawn. Teach words for animals to help Zafar recall these creatures.',
+    characterId: 'zafar',
+    openingMonologue: (zafarIntros as Record<string, string>)['ch-1'],
   },
   {
     id: 'ch-2',
@@ -39,6 +45,8 @@ export const CHAPTERS: Chapter[] = [
     xpRequired: 50,
     storyContext:
       'Marid the sorcerer had a vast family who helped him guard the lamp. His father, mother, brothers and sisters all played a role in the curse. To break it, Zafar must remember each of them. Teach words for family members to unlock this part of the story.',
+    characterId: 'zafar',
+    openingMonologue: (zafarIntros as Record<string, string>)['ch-2'],
   },
   {
     id: 'ch-3',
@@ -52,6 +60,8 @@ export const CHAPTERS: Chapter[] = [
     xpRequired: 120,
     storyContext:
       'On the night of his imprisonment, Zafar was sharing a great feast with the royal court — bread, rice, chicken and sweet tea. Teach him the names of these foods and he will remember the last free evening of his ancient life.',
+    characterId: 'zafar',
+    openingMonologue: (zafarIntros as Record<string, string>)['ch-3'],
   },
   {
     id: 'ch-4',
@@ -65,6 +75,8 @@ export const CHAPTERS: Chapter[] = [
     xpRequired: 220,
     storyContext:
       'The lamp that traps Zafar is covered in magical runes written in different colors. Each color unlocks a fragment of the curse. Teach Zafar the colors of the world and he will help you decipher the runes.',
+    characterId: 'zafar',
+    openingMonologue: (zafarIntros as Record<string, string>)['ch-4'],
   },
   {
     id: 'ch-5',
@@ -78,7 +90,10 @@ export const CHAPTERS: Chapter[] = [
     xpRequired: 350,
     storyContext:
       'Zafar was bound in the great city of Al-Rashid — a place of mosques, markets and schools. To break the final seal, you must name every corner of the city as it was 1,000 years ago. Teach Zafar the places and end his exile forever.',
+    characterId: 'zafar',
+    openingMonologue: (zafarIntros as Record<string, string>)['ch-5'],
   },
+  ...(qamarChaptersData as Chapter[]),
 ];
 
 export function getChapter(id: string): Chapter | undefined {

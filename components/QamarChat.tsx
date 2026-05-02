@@ -2,13 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Send, Volume2 } from "lucide-react";
-import type { JinnMessage, JinnResponse } from "@/app/api/jinn/route";
-import { JINN_VOICES, type JinnVoice } from "@/app/api/tts/route";
-import { getJinnVoice, setJinnVoice, speakJinn } from "@/lib/speech";
+import type { QamarMessage, QamarResponse } from "@/app/api/qamar/route";
+import { speakJinn } from "@/lib/speech";
 import MicInput from "@/components/MicInput";
 
 type ChatMessage = {
-  role: "user" | "jinn";
+  role: "user" | "qamar";
   text: string;
   arabic?: string;
   transliteration?: string;
@@ -18,29 +17,28 @@ type Props = {
   language: "en" | "he";
   learnedWords: string[];
   onLanguageChange: (lang: "en" | "he") => void;
-  onJinnStateChange: (state: "idle" | "talking" | "happy" | "sad") => void;
+  onQamarStateChange: (state: "idle" | "talking" | "happy" | "sad") => void;
   storyContext?: string;
   initialMonologue?: string;
 };
 
-const INITIAL_MESSAGE: ChatMessage = {
-  role: "jinn",
-  text: "I speak only in Arabic. Ask me anything, or say a word in Arabic to begin…",
-  arabic: "أهلاً بك يا صديقي",
-  transliteration: "Ahlan bika ya sadiqi",
+const FALLBACK_INITIAL: ChatMessage = {
+  role: "qamar",
+  text: "Hmm, another wanderer? I suppose I can spare a moment. Ask me something — if you dare.",
+  arabic: "أهلاً أيها التائه",
+  transliteration: "Ahlan ayyuha at-ta'ih",
 };
 
-export default function JinnChat({ language, learnedWords, onLanguageChange, onJinnStateChange, storyContext, initialMonologue }: Props) {
+export default function QamarChat({ language, learnedWords, onLanguageChange, onQamarStateChange, storyContext, initialMonologue }: Props) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   
   const initial: ChatMessage = initialMonologue
-    ? { role: "jinn", text: initialMonologue }
-    : INITIAL_MESSAGE;
-
+    ? { role: "qamar", text: initialMonologue }
+    : FALLBACK_INITIAL;
+  
   const [messages, setMessages] = useState<ChatMessage[]>([initial]);
-  const [apiHistory, setApiHistory] = useState<JinnMessage[]>([]);
-  const [selectedVoice, setSelectedVoice] = useState<JinnVoice>(getJinnVoice());
+  const [apiHistory, setApiHistory] = useState<QamarMessage[]>([]);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -50,11 +48,6 @@ export default function JinnChat({ language, learnedWords, onLanguageChange, onJ
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  const handleVoiceChange = (voice: JinnVoice) => {
-    setSelectedVoice(voice);
-    setJinnVoice(voice);
-  };
-
   const sendMessage = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
@@ -62,34 +55,34 @@ export default function JinnChat({ language, learnedWords, onLanguageChange, onJ
     setInput("");
     setMessages((prev) => [...prev, { role: "user", text: trimmed }]);
     setLoading(true);
-    onJinnStateChange("talking");
+    onQamarStateChange("talking");
 
-    const newApiHistory: JinnMessage[] = [...apiHistory, { role: "user", content: trimmed }];
+    const newApiHistory: QamarMessage[] = [...apiHistory, { role: "user", content: trimmed }];
 
     try {
-      const res = await fetch("/api/jinn", {
+      const res = await fetch("/api/qamar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: trimmed, language, history: apiHistory, learnedWords, storyContext }),
       });
 
-      if (!res.ok) throw new Error("Jinn unavailable");
+      if (!res.ok) throw new Error("Qamar unavailable");
 
-      const data: JinnResponse = await res.json();
+      const data: QamarResponse = await res.json();
 
-      onJinnStateChange(data.emotion);
+      onQamarStateChange(data.emotion);
 
       setMessages((prev) => [
         ...prev,
-        { role: "jinn", text: data.reply, arabic: data.arabic, transliteration: data.transliteration },
+        { role: "qamar", text: data.reply, arabic: data.arabic, transliteration: data.transliteration },
       ]);
 
       if (data.arabic) speakJinn(data.arabic);
 
       setApiHistory([...newApiHistory, { role: "model", content: data.reply }]);
     } catch {
-      onJinnStateChange("sad");
-      setMessages((prev) => [...prev, { role: "jinn", text: "The lamp flickers… something went wrong. Try again." }]);
+      onQamarStateChange("sad");
+      setMessages((prev) => [...prev, { role: "qamar", text: "A sandstorm scrambles the signal… try again." }]);
     } finally {
       setLoading(false);
       inputRef.current?.focus();
@@ -99,7 +92,7 @@ export default function JinnChat({ language, learnedWords, onLanguageChange, onJ
   return (
     <div className="flex w-full flex-col gap-2">
 
-      {/* ── controls row: language toggle + voice picker ── */}
+      {/* ── controls row: language toggle ── */}
       <div className="flex items-center justify-between gap-2 px-0.5">
         <div className="flex overflow-hidden rounded-xl border border-white/10 text-xs font-semibold">
           {(["en", "he"] as const).map((l) => (
@@ -117,18 +110,6 @@ export default function JinnChat({ language, learnedWords, onLanguageChange, onJ
             </button>
           ))}
         </div>
-
-        <select
-          value={selectedVoice}
-          onChange={(e) => handleVoiceChange(e.target.value as JinnVoice)}
-          className="max-w-[120px] truncate rounded-lg border border-white/10 bg-transparent px-2 py-1 text-xs text-amber-300/60 outline-none"
-        >
-          {JINN_VOICES.map((v) => (
-            <option key={v} value={v} style={{ background: "#0d0618" }}>
-              {v}
-            </option>
-          ))}
-        </select>
       </div>
 
       {/* ── conversation history ── */}
@@ -141,7 +122,7 @@ export default function JinnChat({ language, learnedWords, onLanguageChange, onJ
         }}
       >
         {messages.map((msg, i) =>
-          msg.role === "jinn" ? (
+          msg.role === "qamar" ? (
             <div key={i} className="space-y-0.5">
               {msg.arabic && (
                 <div className="flex items-start justify-between gap-2">
@@ -204,7 +185,7 @@ export default function JinnChat({ language, learnedWords, onLanguageChange, onJ
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && sendMessage(input)}
           disabled={loading}
-          placeholder={loading ? "Zafar is thinking…" : "Speak to the Jinn…"}
+          placeholder={loading ? "Qamar is thinking…" : "Speak to Qamar…"}
           className="flex-1 bg-transparent text-sm text-amber-50 placeholder:text-amber-300/40 outline-none"
           dir="auto"
         />
