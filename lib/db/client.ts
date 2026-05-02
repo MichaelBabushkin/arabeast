@@ -4,7 +4,9 @@ import * as schema from "./schema";
 
 const connectionString = process.env.DATABASE_URL!;
 
-// Disable prefetch for serverless / edge environments
-const client = postgres(connectionString, { prepare: false });
+const client = postgres(connectionString, {
+  prepare: false,
+  ssl: connectionString.includes("localhost") ? false : "require",
+});
 
 export const db = drizzle(client, { schema });
