@@ -23,6 +23,15 @@ type Props = {
   initialMonologue?: string;
 };
 
+const VOICE_LABELS: Record<string, string> = {
+  "ar-SA-HamedNeural":   "Hamed (SA)",
+  "ar-SA-ZariyahNeural": "Zariyah (SA)",
+  "ar-EG-ShakirNeural":  "Shakir (EG)",
+  "ar-EG-SalmaNeural":   "Salma (EG)",
+  "ar-LB-RamiNeural":    "Rami (LB)",
+  "ar-JO-TaimNeural":    "Taim (JO)",
+};
+
 const INITIAL_MESSAGE: ChatMessage = {
   role: "jinn",
   text: "I speak only in Arabic. Ask me anything, or say a word in Arabic to begin…",
@@ -125,7 +134,7 @@ export default function JinnChat({ language, learnedWords, onLanguageChange, onJ
         >
           {JINN_VOICES.map((v) => (
             <option key={v} value={v} style={{ background: "#0d0618" }}>
-              {v}
+              {VOICE_LABELS[v] ?? v}
             </option>
           ))}
         </select>
