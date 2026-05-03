@@ -1,6 +1,6 @@
 import type { JinnVoice } from "@/lib/tts";
 
-let activeVoice: JinnVoice = "Charon";
+let activeVoice: JinnVoice = "ar-SA-HamedNeural";
 let activeAudio: HTMLAudioElement | null = null;
 
 export function setJinnVoice(voice: JinnVoice) {
