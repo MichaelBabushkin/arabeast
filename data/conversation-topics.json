@@ -1,0 +1,64 @@
+[
+  {
+    "id": "greetings",
+    "title": "Greetings",
+    "titleArabic": "تحيات",
+    "icon": "👋",
+    "description": "Master hellos, farewells, and asking how someone is.",
+    "color": "#d4a017",
+    "vocabulary": [
+      { "arabic": "مرحبا", "transliteration": "marhaba", "english": "Hello" },
+      { "arabic": "أهلاً وسهلاً", "transliteration": "ahlan wa sahlan", "english": "Welcome" },
+      { "arabic": "كيف حالك؟", "transliteration": "kayfa haluk?", "english": "How are you?" },
+      { "arabic": "بخير، شكراً", "transliteration": "bikhair, shukran", "english": "Fine, thank you" },
+      { "arabic": "شكراً جزيلاً", "transliteration": "shukran jazilan", "english": "Thank you very much" },
+      { "arabic": "من فضلك", "transliteration": "min fadlik", "english": "Please" },
+      { "arabic": "مع السلامة", "transliteration": "ma'a as-salama", "english": "Goodbye" },
+      { "arabic": "إلى اللقاء", "transliteration": "ila al-liqa'", "english": "Until we meet again" }
+    ],
+    "openerZafar": "A traveler seeks to learn the tongue of the ancients! Let us begin where all journeys begin — with a proper greeting. How would you greet me in Arabic?",
+    "openerQamar": "So. Greetings. The very first thing every child learns. Even my desert fox knows مرحبا. Can YOU manage that much, or shall we start with pointing and grunting?"
+  },
+  {
+    "id": "numbers",
+    "title": "Numbers",
+    "titleArabic": "أعداد",
+    "icon": "🔢",
+    "description": "Count from 1 to 10, tell someone your age, talk about quantities.",
+    "color": "#7c3aed",
+    "vocabulary": [
+      { "arabic": "واحد", "transliteration": "wahid", "english": "One" },
+      { "arabic": "اثنان", "transliteration": "ithnan", "english": "Two" },
+      { "arabic": "ثلاثة", "transliteration": "thalatha", "english": "Three" },
+      { "arabic": "أربعة", "transliteration": "arba'a", "english": "Four" },
+      { "arabic": "خمسة", "transliteration": "khamsa", "english": "Five" },
+      { "arabic": "ستة", "transliteration": "sitta", "english": "Six" },
+      { "arabic": "سبعة", "transliteration": "sab'a", "english": "Seven" },
+      { "arabic": "ثمانية", "transliteration": "thamaniya", "english": "Eight" },
+      { "arabic": "تسعة", "transliteration": "tis'a", "english": "Nine" },
+      { "arabic": "عشرة", "transliteration": "'ashara", "english": "Ten" }
+    ],
+    "openerZafar": "Numbers! The language of the stars and the desert trade routes. I counted the grains of sand in my lamp for 1,000 years. Now tell me — what is the Arabic word for 'one'? Is it واحد? Let us see if you know.",
+    "openerQamar": "Numbers. How thrilling. I'll ask you something — how many years did it take you to find this app? Count them for me in Arabic if you can manage even that. Start with واحد — 'one'. Go on."
+  },
+  {
+    "id": "market",
+    "title": "Market Scene",
+    "titleArabic": "في السوق",
+    "icon": "🛒",
+    "description": "Buy items, ask prices, describe things by color and size.",
+    "color": "#059669",
+    "vocabulary": [
+      { "arabic": "كم الثمن؟", "transliteration": "kam ath-thaman?", "english": "How much does it cost?" },
+      { "arabic": "بكم هذا؟", "transliteration": "bikam hatha?", "english": "How much is this?" },
+      { "arabic": "غالي", "transliteration": "ghali", "english": "Expensive" },
+      { "arabic": "رخيص", "transliteration": "rakhis", "english": "Cheap" },
+      { "arabic": "أريد", "transliteration": "urid", "english": "I want" },
+      { "arabic": "هل عندك؟", "transliteration": "hal 'indak?", "english": "Do you have...?" },
+      { "arabic": "كبير", "transliteration": "kabir", "english": "Big" },
+      { "arabic": "صغير", "transliteration": "saghir", "english": "Small" }
+    ],
+    "openerZafar": "Ah, the souk! The great bazaar where I spent many happy centuries before the curse. You wish to haggle and trade? Then you must know the words. Tell me — how would you ask for the price of something in Arabic?",
+    "openerQamar": "The market! If you can't ask بكم هذا — 'how much is this?' — you'll pay triple price for everything. Let's make sure that doesn't happen. Impress me. Ask me the price of something."
+  }
+]

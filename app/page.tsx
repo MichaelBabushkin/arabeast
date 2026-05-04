@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useProgress } from "@/lib/useProgress";
 import JinnCharacter from "@/components/jinn/JinnCharacter";
-import { BookOpen, Swords, UserCircle2, ChevronRight, Lock, LogOut } from "lucide-react";
+import { BookOpen, MessageCircle, Swords, UserCircle2, ChevronRight, Lock, LogOut } from "lucide-react";
 import { CHAPTERS } from "@/lib/chapters";
 
 const SHOWCASE_WORDS = [
@@ -130,7 +130,7 @@ export default function HomePage() {
           <p className="text-xs font-semibold uppercase tracking-widest text-amber-400/50 mb-3">
             Game modes
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
             <Link
               href="/play/story"
@@ -191,6 +191,38 @@ export default function HomePage() {
               </div>
               <div className="flex items-center gap-1.5 text-xs text-amber-400/60 font-medium">
                 <span>Unlimited · all categories</span>
+                <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </Link>
+
+            <Link
+              href="/play/conversation"
+              className="group flex flex-col gap-3 rounded-3xl p-5 transition hover:scale-[1.02]"
+              style={{
+                background: "linear-gradient(135deg, rgba(5,150,105,0.16) 0%, rgba(0,60,40,0.10) 100%)",
+                border: "1px solid rgba(5,150,105,0.3)",
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-xl"
+                  style={{ background: "rgba(5,150,105,0.2)", border: "1px solid rgba(5,150,105,0.25)" }}
+                >
+                  <MessageCircle className="h-5 w-5 text-emerald-400" />
+                </div>
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full text-emerald-900"
+                  style={{ background: "rgba(52,211,153,0.8)" }}>
+                  CONVO
+                </span>
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-amber-50">Conversation</h2>
+                <p className="text-sm text-amber-200/55 mt-0.5 leading-snug">
+                  6 guided exchanges with Zafar or Qamar. Speak Arabic, get evaluated in real time.
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-emerald-400/60 font-medium">
+                <span>3 topics · choose your teacher</span>
                 <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
               </div>
             </Link>
