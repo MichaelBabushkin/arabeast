@@ -7,8 +7,17 @@ import JinnCharacter from "@/components/jinn/JinnCharacter";
 import QamarCharacter from "@/components/qamar/QamarCharacter";
 import MicInput from "@/components/MicInput";
 import { speakJinn } from "@/lib/speech";
-import { DEFAULT_VOICE, DEFAULT_QAMAR_VOICE } from "@/lib/tts";
+import { JINN_VOICES, DEFAULT_VOICE, DEFAULT_QAMAR_VOICE, type JinnVoice } from "@/lib/tts";
 import type { ConvResponse, ConvMessage } from "@/app/api/conversation/route";
+
+const VOICE_LABELS: Record<string, string> = {
+  "ar-SA-HamedNeural":   "Hamed (SA)",
+  "ar-SA-ZariyahNeural": "Zariyah (SA)",
+  "ar-EG-ShakirNeural":  "Shakir (EG)",
+  "ar-EG-SalmaNeural":   "Salma (EG)",
+  "ar-LB-RamiNeural":    "Rami (LB)",
+  "ar-JO-TaimNeural":    "Taim (JO)",
+};
 import topicsRaw from "@/data/conversation-topics.json";
 
 const MAX_EXCHANGES = 6;
@@ -60,7 +69,8 @@ export default function ConversationPage() {
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [selectedCharacter, setSelectedCharacter] = useState<"zafar" | "qamar">("zafar");
   const [characterState, setCharacterState] = useState<CharacterState>("idle");
-  const [language] = useState<"en" | "he">("en");
+  const [language, setLanguage] = useState<"en" | "he">("en");
+  const [selectedVoice, setSelectedVoice] = useState<JinnVoice>(DEFAULT_VOICE);
 
   // session state
   const [opener, setOpener] = useState("");
@@ -74,8 +84,6 @@ export default function ConversationPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const activeVoice = selectedCharacter === "qamar" ? DEFAULT_QAMAR_VOICE : DEFAULT_VOICE;
-
   const setCharacterTemporary = useCallback((state: CharacterState, ms: number) => {
     if (timerRef.current) clearTimeout(timerRef.current);
     setCharacterState(state);
@@ -87,11 +95,10 @@ export default function ConversationPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [exchanges, loading, opener]);
 
-  // speak opener when session starts
+  // animate character when session starts (opener is English — don't TTS it)
   useEffect(() => {
     if (phase === "session" && opener) {
       setCharacterTemporary("talking", 3000);
-      speakJinn(opener, activeVoice);
     }
   }, [phase, opener]);
 
@@ -102,6 +109,7 @@ export default function ConversationPage() {
 
   const handleSelectCharacter = (character: "zafar" | "qamar") => {
     setSelectedCharacter(character);
+    setSelectedVoice(character === "qamar" ? DEFAULT_QAMAR_VOICE : DEFAULT_VOICE);
     if (!selectedTopic) return;
     const openerText = character === "qamar" ? selectedTopic.openerQamar : selectedTopic.openerZafar;
     setOpener(openerText);
@@ -140,7 +148,7 @@ export default function ConversationPage() {
       const data: ConvResponse = await res.json();
 
       setCharacterTemporary(data.emotion, 2500);
-      speakJinn(data.arabic, activeVoice);
+      speakJinn(data.arabic, selectedVoice);
 
       const newExchange: Exchange = {
         userMessage: trimmed,
@@ -168,7 +176,7 @@ export default function ConversationPage() {
       setLoading(false);
       inputRef.current?.focus();
     }
-  }, [loading, selectedTopic, selectedCharacter, exchangeCount, apiHistory, language, activeVoice, setCharacterTemporary]);
+  }, [loading, selectedTopic, selectedCharacter, exchangeCount, apiHistory, language, selectedVoice, setCharacterTemporary]);
 
   const totalScore = exchanges.reduce((sum, e) => sum + e.evaluation.score, 0);
 
@@ -371,6 +379,37 @@ export default function ConversationPage() {
 
             {/* chat panel */}
             <div className="w-full md:flex-1 flex flex-col gap-3">
+              {/* controls: language + voice */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex overflow-hidden rounded-xl border border-white/10 text-xs font-semibold">
+                  {(["en", "he"] as const).map((l) => (
+                    <button
+                      key={l}
+                      type="button"
+                      onClick={() => setLanguage(l)}
+                      className={`px-3 py-1 transition ${
+                        language === l
+                          ? "bg-amber-500/25 text-amber-200"
+                          : "text-amber-300/40 hover:text-amber-300/70"
+                      }`}
+                    >
+                      {l === "en" ? "EN" : "עב"}
+                    </button>
+                  ))}
+                </div>
+                <select
+                  value={selectedVoice}
+                  onChange={(e) => setSelectedVoice(e.target.value as JinnVoice)}
+                  className="max-w-[130px] truncate rounded-lg border border-white/10 bg-transparent px-2 py-1 text-xs text-amber-300/60 outline-none"
+                >
+                  {JINN_VOICES.map((v) => (
+                    <option key={v} value={v} style={{ background: "#0d0618" }}>
+                      {VOICE_LABELS[v] ?? v}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* progress bar */}
               <div className="flex items-center gap-2">
                 <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
@@ -465,7 +504,11 @@ export default function ConversationPage() {
                   className="flex items-center gap-2 rounded-2xl px-3 py-2"
                   style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(212,160,23,0.2)" }}
                 >
-                  <MicInput onTranscript={(t) => sendMessage(t)} disabled={loading} />
+                  <MicInput
+                    onTranscript={(t) => sendMessage(t)}
+                    disabled={loading}
+                    lang={language === "he" ? "he-IL" : "en-US"}
+                  />
                   <input
                     ref={inputRef}
                     type="text"
