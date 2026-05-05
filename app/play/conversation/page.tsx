@@ -7,7 +7,13 @@ import JinnCharacter from "@/components/jinn/JinnCharacter";
 import QamarCharacter from "@/components/qamar/QamarCharacter";
 import MicInput from "@/components/MicInput";
 import { speakJinn } from "@/lib/speech";
-import { JINN_VOICES, DEFAULT_VOICE, DEFAULT_QAMAR_VOICE, type JinnVoice } from "@/lib/tts";
+import { JINN_VOICES, DEFAULT_VOICE, type JinnVoice } from "@/lib/tts";
+import { useSettings } from "@/lib/useSettings";
+
+const CHARACTER_GREETING: Record<"zafar" | "qamar", string> = {
+  zafar: "أهلاً وسهلاً بك يا صديقي!",
+  qamar: "حسناً، هل أنت مستعد؟",
+};
 import type { ConvResponse, ConvMessage } from "@/app/api/conversation/route";
 
 const VOICE_LABELS: Record<string, string> = {
@@ -69,8 +75,12 @@ export default function ConversationPage() {
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [selectedCharacter, setSelectedCharacter] = useState<"zafar" | "qamar">("zafar");
   const [characterState, setCharacterState] = useState<CharacterState>("idle");
-  const [language, setLanguage] = useState<"en" | "he">("en");
+  const { settings, update: updateSettings } = useSettings();
+  const [language, setLanguage] = useState<"en" | "he">(settings.language);
   const [selectedVoice, setSelectedVoice] = useState<JinnVoice>(DEFAULT_VOICE);
+
+  // sync language from settings once loaded
+  useEffect(() => { setLanguage(settings.language); }, [settings.language]);
 
   // session state
   const [opener, setOpener] = useState("");
@@ -95,10 +105,11 @@ export default function ConversationPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [exchanges, loading, opener]);
 
-  // animate character when session starts (opener is English — don't TTS it)
+  // speak Arabic greeting when session starts
   useEffect(() => {
     if (phase === "session" && opener) {
       setCharacterTemporary("talking", 3000);
+      speakJinn(CHARACTER_GREETING[selectedCharacter], selectedVoice);
     }
   }, [phase, opener]);
 
@@ -109,7 +120,8 @@ export default function ConversationPage() {
 
   const handleSelectCharacter = (character: "zafar" | "qamar") => {
     setSelectedCharacter(character);
-    setSelectedVoice(character === "qamar" ? DEFAULT_QAMAR_VOICE : DEFAULT_VOICE);
+    const defaultVoice = settings.arabicVoice;
+    setSelectedVoice(defaultVoice);
     if (!selectedTopic) return;
     const openerText = character === "qamar" ? selectedTopic.openerQamar : selectedTopic.openerZafar;
     setOpener(openerText);
@@ -399,7 +411,11 @@ export default function ConversationPage() {
                 </div>
                 <select
                   value={selectedVoice}
-                  onChange={(e) => setSelectedVoice(e.target.value as JinnVoice)}
+                  onChange={(e) => {
+                    const v = e.target.value as JinnVoice;
+                    setSelectedVoice(v);
+                    updateSettings({ arabicVoice: v });
+                  }}
                   className="max-w-[130px] truncate rounded-lg border border-white/10 bg-transparent px-2 py-1 text-xs text-amber-300/60 outline-none"
                 >
                   {JINN_VOICES.map((v) => (
