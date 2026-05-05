@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { Send, Volume2 } from "lucide-react";
 import type { JinnMessage, JinnResponse } from "@/app/api/jinn/route";
 import { JINN_VOICES, type JinnVoice } from "@/lib/tts";
-import { getJinnVoice, setJinnVoice, speakJinn } from "@/lib/speech";
+import { setJinnVoice, speakJinn } from "@/lib/speech";
+import { useSettings } from "@/lib/useSettings";
 import MicInput from "@/components/MicInput";
 
 type ChatMessage = {
@@ -49,7 +50,11 @@ export default function JinnChat({ language, learnedWords, onLanguageChange, onJ
 
   const [messages, setMessages] = useState<ChatMessage[]>([initial]);
   const [apiHistory, setApiHistory] = useState<JinnMessage[]>([]);
-  const [selectedVoice, setSelectedVoice] = useState<JinnVoice>(getJinnVoice());
+  const { settings, update: updateSettings } = useSettings();
+  const [selectedVoice, setSelectedVoice] = useState<JinnVoice>(settings.arabicVoice);
+
+  // sync initial voice from settings once loaded
+  useEffect(() => { setSelectedVoice(settings.arabicVoice); }, [settings.arabicVoice]);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -62,6 +67,7 @@ export default function JinnChat({ language, learnedWords, onLanguageChange, onJ
   const handleVoiceChange = (voice: JinnVoice) => {
     setSelectedVoice(voice);
     setJinnVoice(voice);
+    updateSettings({ arabicVoice: voice });
   };
 
   const sendMessage = async (text: string) => {
@@ -93,7 +99,7 @@ export default function JinnChat({ language, learnedWords, onLanguageChange, onJ
         { role: "jinn", text: data.reply, arabic: data.arabic, transliteration: data.transliteration },
       ]);
 
-      if (data.arabic) speakJinn(data.arabic);
+      if (data.arabic) speakJinn(data.arabic, selectedVoice);
 
       setApiHistory([...newApiHistory, { role: "model", content: data.reply }]);
     } catch {
@@ -162,7 +168,7 @@ export default function JinnChat({ language, learnedWords, onLanguageChange, onJ
                   </p>
                   <button
                     type="button"
-                    onClick={() => speakJinn(msg.arabic!)}
+                    onClick={() => speakJinn(msg.arabic!, selectedVoice)}
                     className="mt-1 flex-shrink-0 text-amber-400/40 transition hover:text-amber-300"
                     aria-label="Replay"
                   >

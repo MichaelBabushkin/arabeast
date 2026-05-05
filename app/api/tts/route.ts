@@ -3,9 +3,8 @@ import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts";
 import crypto from "crypto";
 import { db } from "@/lib/db/client";
 import { ttsLog } from "@/lib/db/schema";
-import { JINN_VOICES, DEFAULT_VOICE } from "@/lib/tts";
+import { ALL_VOICES, DEFAULT_VOICE } from "@/lib/tts";
 export type { JinnVoice } from "@/lib/tts";
-export { JINN_VOICES };
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +39,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Validate voice is in our allowed list
-  const safeVoice = (JINN_VOICES as readonly string[]).includes(voice)
+  const safeVoice = (ALL_VOICES as readonly string[]).includes(voice)
     ? voice
     : DEFAULT_VOICE;
 

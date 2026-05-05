@@ -1,6 +1,7 @@
-import type { JinnVoice } from "@/lib/tts";
+import type { AnyVoice, JinnVoice } from "@/lib/tts";
+import { DEFAULT_VOICE } from "@/lib/tts";
 
-let activeVoice: JinnVoice = "ar-SA-HamedNeural";
+let activeVoice: JinnVoice = DEFAULT_VOICE;
 let activeAudio: HTMLAudioElement | null = null;
 
 export function setJinnVoice(voice: JinnVoice) {
@@ -11,21 +12,22 @@ export function getJinnVoice(): JinnVoice {
   return activeVoice;
 }
 
-/** Speak text via Gemini TTS. Falls back to browser synthesis on error. */
-export async function speakJinn(text: string): Promise<void> {
+/** Speak text via Edge TTS. Falls back to browser synthesis on error. */
+export async function speakJinn(text: string, voiceOverride?: AnyVoice): Promise<void> {
   if (typeof window === "undefined") return;
 
-  // stop anything currently playing
   if (activeAudio) {
     activeAudio.pause();
     activeAudio = null;
   }
 
+  const voice = voiceOverride ?? activeVoice;
+
   try {
     const res = await fetch("/api/tts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, voice: activeVoice }),
+      body: JSON.stringify({ text, voice }),
     });
 
     if (!res.ok) throw new Error(`TTS ${res.status}`);
@@ -40,12 +42,12 @@ export async function speakJinn(text: string): Promise<void> {
     };
     await audio.play();
   } catch {
-    // rate-limited or network error — fall back to browser synthesis
-    speakArabic(text);
+    // fallback to browser synthesis for Arabic only
+    if (voice.startsWith("ar-")) speakArabic(text);
   }
 }
 
-/** Browser Web Speech API fallback — used for quiz option playback. */
+/** Browser Web Speech API — used as fallback for Arabic. */
 export function speakArabic(text: string, rate = 0.85) {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
   window.speechSynthesis.cancel();

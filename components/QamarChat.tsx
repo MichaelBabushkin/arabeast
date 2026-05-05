@@ -3,8 +3,19 @@
 import { useEffect, useRef, useState } from "react";
 import { Send, Volume2 } from "lucide-react";
 import type { QamarMessage, QamarResponse } from "@/app/api/qamar/route";
+import { JINN_VOICES, type JinnVoice } from "@/lib/tts";
 import { speakJinn } from "@/lib/speech";
+import { useSettings } from "@/lib/useSettings";
 import MicInput from "@/components/MicInput";
+
+const VOICE_LABELS: Record<string, string> = {
+  "ar-SA-HamedNeural":   "Hamed (SA)",
+  "ar-SA-ZariyahNeural": "Zariyah (SA)",
+  "ar-EG-ShakirNeural":  "Shakir (EG)",
+  "ar-EG-SalmaNeural":   "Salma (EG)",
+  "ar-LB-RamiNeural":    "Rami (LB)",
+  "ar-JO-TaimNeural":    "Taim (JO)",
+};
 
 type ChatMessage = {
   role: "user" | "qamar";
@@ -39,6 +50,15 @@ export default function QamarChat({ language, learnedWords, onLanguageChange, on
   
   const [messages, setMessages] = useState<ChatMessage[]>([initial]);
   const [apiHistory, setApiHistory] = useState<QamarMessage[]>([]);
+  const { settings, update: updateSettings } = useSettings();
+  const [selectedVoice, setSelectedVoice] = useState<JinnVoice>(settings.arabicVoice);
+
+  useEffect(() => { setSelectedVoice(settings.arabicVoice); }, [settings.arabicVoice]);
+
+  const handleVoiceChange = (voice: JinnVoice) => {
+    setSelectedVoice(voice);
+    updateSettings({ arabicVoice: voice });
+  };
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -77,7 +97,7 @@ export default function QamarChat({ language, learnedWords, onLanguageChange, on
         { role: "qamar", text: data.reply, arabic: data.arabic, transliteration: data.transliteration },
       ]);
 
-      if (data.arabic) speakJinn(data.arabic);
+      if (data.arabic) speakJinn(data.arabic, selectedVoice);
 
       setApiHistory([...newApiHistory, { role: "model", content: data.reply }]);
     } catch {
@@ -92,7 +112,7 @@ export default function QamarChat({ language, learnedWords, onLanguageChange, on
   return (
     <div className="flex w-full flex-col gap-2">
 
-      {/* ── controls row: language toggle ── */}
+      {/* ── controls row: language toggle + voice picker ── */}
       <div className="flex items-center justify-between gap-2 px-0.5">
         <div className="flex overflow-hidden rounded-xl border border-white/10 text-xs font-semibold">
           {(["en", "he"] as const).map((l) => (
@@ -110,6 +130,17 @@ export default function QamarChat({ language, learnedWords, onLanguageChange, on
             </button>
           ))}
         </div>
+        <select
+          value={selectedVoice}
+          onChange={(e) => handleVoiceChange(e.target.value as JinnVoice)}
+          className="max-w-[120px] truncate rounded-lg border border-white/10 bg-transparent px-2 py-1 text-xs text-amber-300/60 outline-none"
+        >
+          {JINN_VOICES.map((v) => (
+            <option key={v} value={v} style={{ background: "#0d0618" }}>
+              {VOICE_LABELS[v] ?? v}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* ── conversation history ── */}
@@ -134,7 +165,7 @@ export default function QamarChat({ language, learnedWords, onLanguageChange, on
                   </p>
                   <button
                     type="button"
-                    onClick={() => speakJinn(msg.arabic!)}
+                    onClick={() => speakJinn(msg.arabic!, selectedVoice)}
                     className="mt-1 flex-shrink-0 text-amber-400/40 transition hover:text-amber-300"
                     aria-label="Replay"
                   >

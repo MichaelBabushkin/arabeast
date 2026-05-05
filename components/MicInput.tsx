@@ -6,13 +6,14 @@ import { Mic, MicOff } from "lucide-react";
 type Props = {
   onTranscript: (text: string) => void;
   disabled?: boolean;
+  lang?: string;
 };
 
 // SpeechRecognition is not in TypeScript's default lib
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SR = any;
 
-export default function MicInput({ onTranscript, disabled }: Props) {
+export default function MicInput({ onTranscript, disabled, lang = "ar-SA" }: Props) {
   const [supported, setSupported] = useState(false);
   const [recording, setRecording] = useState(false);
   const recognitionRef = useRef<SR>(null);
@@ -34,7 +35,7 @@ export default function MicInput({ onTranscript, disabled }: Props) {
     if (!SpeechRecognitionImpl) return;
 
     const recognition = new SpeechRecognitionImpl();
-    recognition.lang = "ar-SA";
+    recognition.lang = lang;
     recognition.continuous = false;
     recognition.interimResults = false;
 
