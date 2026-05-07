@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
+import { withRetry } from "@/lib/retry";
 
 export const dynamic = "force-dynamic";
 
@@ -87,16 +88,18 @@ export async function POST(req: NextRequest) {
   ];
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite-preview",
-      config: {
-        systemInstruction,
-        responseMimeType: "application/json",
-        temperature: 0.9,
-        maxOutputTokens: 300,
-      },
-      contents,
-    });
+    const response = await withRetry(() =>
+      ai.models.generateContent({
+        model: "gemini-3.1-flash-lite-preview",
+        config: {
+          systemInstruction,
+          responseMimeType: "application/json",
+          temperature: 0.9,
+          maxOutputTokens: 300,
+        },
+        contents,
+      })
+    );
 
     const text = response.text ?? "";
 

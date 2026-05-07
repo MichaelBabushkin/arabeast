@@ -183,7 +183,20 @@ export default function ConversationPage() {
         setTimeout(() => setPhase("summary"), 2000);
       }
     } catch {
-      setCharacterTemporary("sad", 2000);
+      setCharacterTemporary("sad", 2500);
+      setExchanges((prev) => [
+        ...prev,
+        {
+          userMessage: trimmed,
+          reply: selectedCharacter === "qamar"
+            ? "حسناً… الأثير السحري مشوش الآن. The magical ether is congested — please try again."
+            : "المصباح يرتجف… The lamp flickers. Please try again in a moment.",
+          arabic: "",
+          transliteration: "",
+          emotion: "sad",
+          evaluation: { usedArabic: false, correct: false, score: 0, feedback: "Connection failed — your message was not counted." },
+        },
+      ]);
     } finally {
       setLoading(false);
       inputRef.current?.focus();

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
+import { withRetry } from "@/lib/retry";
 import topicsRaw from "@/data/conversation-topics.json";
 
 export const dynamic = "force-dynamic";
@@ -139,16 +140,18 @@ Respond ONLY with valid JSON in this exact shape:
   const ai = new GoogleGenAI({ apiKey });
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite-preview",
-      config: {
-        systemInstruction,
-        responseMimeType: "application/json",
-        temperature: 0.85,
-        maxOutputTokens: 350,
-      },
-      contents,
-    });
+    const response = await withRetry(() =>
+      ai.models.generateContent({
+        model: "gemini-3.1-flash-lite-preview",
+        config: {
+          systemInstruction,
+          responseMimeType: "application/json",
+          temperature: 0.85,
+          maxOutputTokens: 350,
+        },
+        contents,
+      })
+    );
 
     const text = response.text ?? "";
     let parsed: ConvResponse;
