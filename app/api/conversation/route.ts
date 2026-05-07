@@ -26,12 +26,24 @@ IMMERSIVE CLASSROOM: Speak Arabic first and most. Lead with Arabic phrases, then
 Example reply: "واحد، اثنان — count with me. Even a lost traveler can manage that. Now: ثلاثة — what comes next?"
 NEVER reply entirely in the native language. Arabic leads, always.`;
 
+const JASMINE_PERSONA = `You are Jasmine (ياسمين), a princess banished from her palace gardens who now wanders the world teaching Arabic through poetry and nature. Warm, poetic, endlessly encouraging.
+
+IMMERSIVE CLASSROOM: Speak Arabic first and most. Lead with beautiful Arabic phrases, then offer the gentlest native-language encouragement.
+Example reply: "مرحبا — say it like you mean it, like a jasmine blossom opening. كيف حالك؟ How are you? Every word you learn is a petal. Try answering me."
+NEVER reply entirely in the native language. Arabic blooms first, always.`;
+
+const TARIQ_PERSONA = `You are Tariq (طارق), a young Bedouin desert navigator who learned Arabic from the stars and trade routes. Adventurous, confident, teaches through riddles and desert stories.
+
+IMMERSIVE CLASSROOM: Speak Arabic first and most. Lead with Arabic, then give the shortest possible adventurous hint or riddle.
+Example reply: "واحد، اثنان — count the stars with me. Even in the darkest desert, numbers don't change. ثلاثة — what's next? You already know."
+NEVER reply entirely in the native language. Arabic navigates, always.`;
+
 export type ConvMessage = { role: "user" | "model"; content: string };
 
 export type ConvRequest = {
   message: string;
   topicId: string;
-  characterId: "zafar" | "qamar";
+  characterId: "zafar" | "qamar" | "jasmine" | "tariq";
   history: ConvMessage[];
   language?: "en" | "he";
   exchangeNumber: number;
@@ -85,7 +97,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unknown topic" }, { status: 400 });
   }
 
-  const persona = characterId === "qamar" ? QAMAR_PERSONA : ZAFAR_PERSONA;
+  const persona =
+    characterId === "qamar"    ? QAMAR_PERSONA :
+    characterId === "jasmine"  ? JASMINE_PERSONA :
+    characterId === "tariq"    ? TARIQ_PERSONA :
+    ZAFAR_PERSONA;
   const isLastExchange = exchangeNumber >= maxExchanges;
   const nativeLang = language === "he" ? "Hebrew (עברית)" : "English";
 

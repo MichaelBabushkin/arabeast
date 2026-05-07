@@ -5,14 +5,18 @@ import Link from "next/link";
 import { ArrowLeft, CheckCircle, XCircle, Send } from "lucide-react";
 import JinnCharacter from "@/components/jinn/JinnCharacter";
 import QamarCharacter from "@/components/qamar/QamarCharacter";
+import JasmineCharacter from "@/components/jasmine/JasmineCharacter";
+import TariqCharacter from "@/components/tariq/TariqCharacter";
 import MicInput from "@/components/MicInput";
 import { speakJinn } from "@/lib/speech";
 import { JINN_VOICES, DEFAULT_VOICE, type JinnVoice } from "@/lib/tts";
 import { useSettings } from "@/lib/useSettings";
 
-const CHARACTER_GREETING: Record<"zafar" | "qamar", string> = {
-  zafar: "أهلاً وسهلاً بك يا صديقي!",
-  qamar: "حسناً، هل أنت مستعد؟",
+const CHARACTER_GREETING: Record<"zafar" | "qamar" | "jasmine" | "tariq", string> = {
+  zafar:   "أهلاً وسهلاً بك يا صديقي!",
+  qamar:   "حسناً، هل أنت مستعد؟",
+  jasmine: "أهلاً بك، يا طالب العلم!",
+  tariq:   "تعال! النجوم تنتظرنا.",
 };
 import type { ConvResponse, ConvMessage } from "@/app/api/conversation/route";
 
@@ -38,6 +42,8 @@ type Topic = {
   vocabulary: { arabic: string; transliteration: string; english: string }[];
   openerZafar: string;
   openerQamar: string;
+  openerJasmine: string;
+  openerTariq: string;
 };
 
 const TOPICS = topicsRaw as Topic[];
@@ -73,7 +79,7 @@ const STARS = [
 export default function ConversationPage() {
   const [phase, setPhase] = useState<Phase>("topics");
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
-  const [selectedCharacter, setSelectedCharacter] = useState<"zafar" | "qamar">("zafar");
+  const [selectedCharacter, setSelectedCharacter] = useState<"zafar" | "qamar" | "jasmine" | "tariq">("zafar");
   const [characterState, setCharacterState] = useState<CharacterState>("idle");
   const { settings, update: updateSettings } = useSettings();
   const [language, setLanguage] = useState<"en" | "he">(settings.language);
@@ -118,12 +124,18 @@ export default function ConversationPage() {
     setPhase("character");
   };
 
-  const handleSelectCharacter = (character: "zafar" | "qamar") => {
+  const handleSelectCharacter = (character: "zafar" | "qamar" | "jasmine" | "tariq") => {
     setSelectedCharacter(character);
     const defaultVoice = settings.arabicVoice;
     setSelectedVoice(defaultVoice);
     if (!selectedTopic) return;
-    const openerText = character === "qamar" ? selectedTopic.openerQamar : selectedTopic.openerZafar;
+    const openerMap = {
+      zafar:   selectedTopic.openerZafar,
+      qamar:   selectedTopic.openerQamar,
+      jasmine: selectedTopic.openerJasmine,
+      tariq:   selectedTopic.openerTariq,
+    };
+    const openerText = openerMap[character];
     setOpener(openerText);
     setExchanges([]);
     setApiHistory([]);
@@ -188,9 +200,14 @@ export default function ConversationPage() {
         ...prev,
         {
           userMessage: trimmed,
-          reply: selectedCharacter === "qamar"
-            ? "حسناً… الأثير السحري مشوش الآن. The magical ether is congested — please try again."
-            : "المصباح يرتجف… The lamp flickers. Please try again in a moment.",
+          reply:
+            selectedCharacter === "qamar"
+              ? "حسناً… الأثير السحري مشوش الآن. The magical ether is congested — please try again."
+              : selectedCharacter === "jasmine"
+              ? "آسفة… الريح أخذت كلماتي. The wind took my words — please try again."
+              : selectedCharacter === "tariq"
+              ? "النجوم محجوبة الآن. The stars are hidden — try again in a moment."
+              : "المصباح يرتجف… The lamp flickers. Please try again in a moment.",
           arabic: "",
           transliteration: "",
           emotion: "sad",
@@ -319,25 +336,25 @@ export default function ConversationPage() {
               </p>
               <h2 className="text-2xl font-black text-amber-50">Choose Your Teacher</h2>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               {/* Zafar */}
               <button
                 type="button"
                 onClick={() => handleSelectCharacter("zafar")}
-                className="flex flex-col gap-3 rounded-3xl p-5 text-left transition hover:scale-[1.02]"
+                className="flex flex-col gap-2 rounded-3xl p-4 text-left transition hover:scale-[1.02]"
                 style={{
                   background: "linear-gradient(135deg, rgba(212,160,23,0.16) 0%, rgba(120,60,10,0.10) 100%)",
                   border: "1px solid rgba(212,160,23,0.35)",
                 }}
               >
-                <div className="mx-auto w-[120px] aspect-[260/390]">
+                <div className="mx-auto w-[100px] aspect-[260/390]">
                   <JinnCharacter state="idle" />
                 </div>
                 <div>
-                  <p className="font-bold text-amber-50 text-lg">Zafar</p>
-                  <p className="text-xs text-amber-400/60 mb-1">Ancient Jinn · 1,000 years imprisoned</p>
-                  <p className="text-sm text-amber-200/55">
-                    Warm, patient, and encouraging. Celebrates every attempt. Perfect if you&apos;re just starting out.
+                  <p className="font-bold text-amber-50">Zafar</p>
+                  <p className="text-xs text-amber-400/60 mb-1">Ancient Jinn</p>
+                  <p className="text-xs text-amber-200/55">
+                    Warm and patient. Celebrates every attempt.
                   </p>
                 </div>
               </button>
@@ -345,20 +362,62 @@ export default function ConversationPage() {
               <button
                 type="button"
                 onClick={() => handleSelectCharacter("qamar")}
-                className="flex flex-col gap-3 rounded-3xl p-5 text-left transition hover:scale-[1.02]"
+                className="flex flex-col gap-2 rounded-3xl p-4 text-left transition hover:scale-[1.02]"
                 style={{
                   background: "linear-gradient(135deg, rgba(124,58,237,0.16) 0%, rgba(60,0,120,0.10) 100%)",
                   border: "1px solid rgba(124,58,237,0.35)",
                 }}
               >
-                <div className="mx-auto w-[120px] aspect-[260/390]">
+                <div className="mx-auto w-[100px] aspect-[260/390]">
                   <QamarCharacter state="idle" />
                 </div>
                 <div>
-                  <p className="font-bold text-amber-50 text-lg">Qamar</p>
-                  <p className="text-xs text-purple-400/60 mb-1">Scholar Fox Spirit · 7 languages mastered</p>
-                  <p className="text-sm text-amber-200/55">
-                    Witty, sarcastic, secretly delighted when you succeed. For learners who want a challenge.
+                  <p className="font-bold text-amber-50">Qamar</p>
+                  <p className="text-xs text-purple-400/60 mb-1">Scholar Fox</p>
+                  <p className="text-xs text-amber-200/55">
+                    Witty and sarcastic. For learners who want a challenge.
+                  </p>
+                </div>
+              </button>
+              {/* Jasmine */}
+              <button
+                type="button"
+                onClick={() => handleSelectCharacter("jasmine")}
+                className="flex flex-col gap-2 rounded-3xl p-4 text-left transition hover:scale-[1.02]"
+                style={{
+                  background: "linear-gradient(135deg, rgba(45,212,191,0.16) 0%, rgba(13,148,136,0.10) 100%)",
+                  border: "1px solid rgba(45,212,191,0.35)",
+                }}
+              >
+                <div className="mx-auto w-[100px] aspect-[260/390]">
+                  <JasmineCharacter state="idle" />
+                </div>
+                <div>
+                  <p className="font-bold text-amber-50">Jasmine</p>
+                  <p className="text-xs text-teal-400/60 mb-1">Garden Princess</p>
+                  <p className="text-xs text-amber-200/55">
+                    Poetic and encouraging. Teaches through beauty.
+                  </p>
+                </div>
+              </button>
+              {/* Tariq */}
+              <button
+                type="button"
+                onClick={() => handleSelectCharacter("tariq")}
+                className="flex flex-col gap-2 rounded-3xl p-4 text-left transition hover:scale-[1.02]"
+                style={{
+                  background: "linear-gradient(135deg, rgba(245,158,11,0.16) 0%, rgba(120,70,0,0.10) 100%)",
+                  border: "1px solid rgba(245,158,11,0.35)",
+                }}
+              >
+                <div className="mx-auto w-[100px] aspect-[260/390]">
+                  <TariqCharacter state="idle" />
+                </div>
+                <div>
+                  <p className="font-bold text-amber-50">Tariq</p>
+                  <p className="text-xs text-amber-400/60 mb-1">Star Navigator</p>
+                  <p className="text-xs text-amber-200/55">
+                    Adventurous and direct. Teaches through riddles.
                   </p>
                 </div>
               </button>
@@ -375,6 +434,10 @@ export default function ConversationPage() {
               <div className="w-full max-w-[200px] mx-auto aspect-[260/390]">
                 {selectedCharacter === "qamar" ? (
                   <QamarCharacter state={characterState} />
+                ) : selectedCharacter === "jasmine" ? (
+                  <JasmineCharacter state={characterState} />
+                ) : selectedCharacter === "tariq" ? (
+                  <TariqCharacter state={characterState} />
                 ) : (
                   <JinnCharacter state={characterState} />
                 )}
