@@ -1,6 +1,6 @@
 import vocab from '@/data/modern-standard-arabic.json';
 
-export type VocabCategory = 'animals' | 'family' | 'food' | 'colors' | 'places' | 'numbers' | 'greetings' | 'body' | 'nature' | 'verbs';
+export type VocabCategory = 'animals' | 'family' | 'food' | 'colors' | 'places' | 'numbers' | 'greetings' | 'body' | 'nature' | 'verbs' | 'football';
 
 export type VocabEntry = {
   id: string;

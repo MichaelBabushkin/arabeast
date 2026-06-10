@@ -19,7 +19,8 @@
     "openerZafar": "A traveler seeks to learn the tongue of the ancients! Let us begin where all journeys begin — with a proper greeting. How would you greet me in Arabic?",
     "openerQamar": "So. Greetings. The very first thing every child learns. Even my desert fox knows مرحبا. Can YOU manage that much, or shall we start with pointing and grunting?",
     "openerJasmine": "أهلاً بك — welcome, dear student. The word مرحبا is like a jasmine blossom — small, but it fills the whole room with warmth. Shall we learn how to greet the world in Arabic?",
-    "openerTariq": "مرحبا! Every journey starts with a greeting — even in the desert, the first word to a stranger can save your life. Let us begin there. Do you know how to say 'hello' in Arabic?"
+    "openerTariq": "مرحبا! Every journey starts with a greeting — even in the desert, the first word to a stranger can save your life. Let us begin there. Do you know how to say 'hello' in Arabic?",
+    "openerFaris": "أهلاً يا بطل! Welcome to the squad, champion! Before every match the captains shake hands. مرحبا — that's your first touch on the ball. Greet me back in Arabic and we kick off!"
   },
   {
     "id": "numbers",
@@ -43,7 +44,8 @@
     "openerZafar": "Numbers! The language of the stars and the desert trade routes. I counted the grains of sand in my lamp for 1,000 years. Now tell me — what is the Arabic word for 'one'? Is it واحد? Let us see if you know.",
     "openerQamar": "Numbers. How thrilling. I'll ask you something — how many years did it take you to find this app? Count them for me in Arabic if you can manage even that. Start with واحد — 'one'. Go on.",
     "openerJasmine": "واحد، اثنان، ثلاثة — numbers are the heartbeat of language. The great poets counted their syllables before they counted their gold. Tell me — can you count to three in Arabic?",
-    "openerTariq": "واحد — one star is enough to find north. اثنان — two stars form a line. Can you continue? The desert has ten stars worth knowing. Let us start counting together."
+    "openerTariq": "واحد — one star is enough to find north. اثنان — two stars form a line. Can you continue? The desert has ten stars worth knowing. Let us start counting together.",
+    "openerFaris": "Numbers win matches! My jersey is رقم عشرة — number ten. واحد، اثنان، ثلاثة — count the goals with me! Can you take it from ثلاثة? Three — what comes next, champion?"
   },
   {
     "id": "market",
@@ -65,6 +67,31 @@
     "openerZafar": "Ah, the souk! The great bazaar where I spent many happy centuries before the curse. You wish to haggle and trade? Then you must know the words. Tell me — how would you ask for the price of something in Arabic?",
     "openerQamar": "The market! If you can't ask بكم هذا — 'how much is this?' — you'll pay triple price for everything. Let's make sure that doesn't happen. Impress me. Ask me the price of something.",
     "openerJasmine": "في السوق — the market is where all of life happens. I used to sneak away from the palace just to smell the spices and hear the merchants call. بكم هذا؟ — can you ask how much something costs in Arabic?",
-    "openerTariq": "السوق! Every town on every trade route has one. I've bartered camels for water and stars for stories. The first word you need is بكم — 'how much'. Do you know it? Try asking me the price of something."
+    "openerTariq": "السوق! Every town on every trade route has one. I've bartered camels for water and stars for stories. The first word you need is بكم — 'how much'. Do you know it? Try asking me the price of something.",
+    "openerFaris": "The market is like the transfer window — everyone's haggling! بكم هذا؟ — 'how much is this?' Ask me that in Arabic and I'll teach you to negotiate like a striker chasing a contract."
+  },
+  {
+    "id": "worldcup",
+    "title": "World Cup",
+    "titleArabic": "كأس العالم",
+    "icon": "⚽",
+    "description": "Mundial Edition! Football vocabulary — goals, teams, the trophy, and the roar of the crowd.",
+    "color": "#22c55e",
+    "edition": "mundial",
+    "vocabulary": [
+      { "arabic": "كرة القدم", "transliteration": "kurat al-qadam", "english": "Football" },
+      { "arabic": "هدف", "transliteration": "hadaf", "english": "Goal" },
+      { "arabic": "لاعب", "transliteration": "la'ib", "english": "Player" },
+      { "arabic": "فريق", "transliteration": "fariq", "english": "Team" },
+      { "arabic": "مباراة", "transliteration": "mubarat", "english": "Match" },
+      { "arabic": "ملعب", "transliteration": "mal'ab", "english": "Stadium" },
+      { "arabic": "كأس", "transliteration": "ka's", "english": "Cup / Trophy" },
+      { "arabic": "فوز", "transliteration": "fawz", "english": "Victory" }
+    ],
+    "openerZafar": "كأس العالم! Even sealed in my lamp, I heard the roar of crowds across a thousand years. Football — كرة القدم — unites every tongue. Tell me, what is the Arabic word for 'goal'?",
+    "openerQamar": "The World Cup. Twenty-two adults chasing one ball while millions scream. Riveting. Still — هدف means 'goal', and if you can't even say that, don't expect a trophy. Try it.",
+    "openerJasmine": "كأس العالم — the World Cup! Even the poets would pause their verses for a beautiful goal. هدف — say it, and feel the whole stadium rise. Can you tell me 'goal' in Arabic?",
+    "openerTariq": "كأس العالم! The whole desert gathers around one radio for the match. هدف — 'goal!' — is the word that makes grown men weep with joy. Can you shout it in Arabic?",
+    "openerFaris": "هيا بنا! THIS is my world — كأس العالم, the World Cup! I've lifted the كأس myself, champion. Let's start with the sweetest word in the game: هدف — 'GOAL!' Can you say it in Arabic?"
   }
 ]

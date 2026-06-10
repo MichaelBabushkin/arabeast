@@ -7,16 +7,20 @@ import JinnCharacter from "@/components/jinn/JinnCharacter";
 import QamarCharacter from "@/components/qamar/QamarCharacter";
 import JasmineCharacter from "@/components/jasmine/JasmineCharacter";
 import TariqCharacter from "@/components/tariq/TariqCharacter";
+import FarisCharacter from "@/components/faris/FarisCharacter";
 import MicInput from "@/components/MicInput";
 import { speakJinn } from "@/lib/speech";
 import { JINN_VOICES, DEFAULT_VOICE, type JinnVoice } from "@/lib/tts";
 import { useSettings } from "@/lib/useSettings";
 
-const CHARACTER_GREETING: Record<"zafar" | "qamar" | "jasmine" | "tariq", string> = {
+type CharacterId = "zafar" | "qamar" | "jasmine" | "tariq" | "faris";
+
+const CHARACTER_GREETING: Record<CharacterId, string> = {
   zafar:   "أهلاً وسهلاً بك يا صديقي!",
   qamar:   "حسناً، هل أنت مستعد؟",
   jasmine: "أهلاً بك، يا طالب العلم!",
   tariq:   "تعال! النجوم تنتظرنا.",
+  faris:   "هيا بنا يا بطل!",
 };
 import type { ConvResponse, ConvMessage } from "@/app/api/conversation/route";
 
@@ -44,6 +48,7 @@ type Topic = {
   openerQamar: string;
   openerJasmine: string;
   openerTariq: string;
+  openerFaris: string;
 };
 
 const TOPICS = topicsRaw as Topic[];
@@ -79,7 +84,7 @@ const STARS = [
 export default function ConversationPage() {
   const [phase, setPhase] = useState<Phase>("topics");
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
-  const [selectedCharacter, setSelectedCharacter] = useState<"zafar" | "qamar" | "jasmine" | "tariq">("zafar");
+  const [selectedCharacter, setSelectedCharacter] = useState<CharacterId>("zafar");
   const [characterState, setCharacterState] = useState<CharacterState>("idle");
   const { settings, update: updateSettings } = useSettings();
   const [language, setLanguage] = useState<"en" | "he">(settings.language);
@@ -124,16 +129,17 @@ export default function ConversationPage() {
     setPhase("character");
   };
 
-  const handleSelectCharacter = (character: "zafar" | "qamar" | "jasmine" | "tariq") => {
+  const handleSelectCharacter = (character: CharacterId) => {
     setSelectedCharacter(character);
     const defaultVoice = settings.arabicVoice;
     setSelectedVoice(defaultVoice);
     if (!selectedTopic) return;
-    const openerMap = {
+    const openerMap: Record<CharacterId, string> = {
       zafar:   selectedTopic.openerZafar,
       qamar:   selectedTopic.openerQamar,
       jasmine: selectedTopic.openerJasmine,
       tariq:   selectedTopic.openerTariq,
+      faris:   selectedTopic.openerFaris,
     };
     const openerText = openerMap[character];
     setOpener(openerText);
@@ -207,6 +213,8 @@ export default function ConversationPage() {
               ? "آسفة… الريح أخذت كلماتي. The wind took my words — please try again."
               : selectedCharacter === "tariq"
               ? "النجوم محجوبة الآن. The stars are hidden — try again in a moment."
+              : selectedCharacter === "faris"
+              ? "توقف اللعب! The match is paused — connection trouble. Get back on the pitch and try again!"
               : "المصباح يرتجف… The lamp flickers. Please try again in a moment.",
           arabic: "",
           transliteration: "",
@@ -421,6 +429,35 @@ export default function ConversationPage() {
                   </p>
                 </div>
               </button>
+              {/* Faris — Mundial Edition */}
+              <button
+                type="button"
+                onClick={() => handleSelectCharacter("faris")}
+                className="relative flex flex-col gap-2 rounded-3xl p-4 text-left transition hover:scale-[1.02] col-span-2"
+                style={{
+                  background: "linear-gradient(135deg, rgba(34,197,94,0.18) 0%, rgba(21,128,61,0.10) 100%)",
+                  border: "1px solid rgba(34,197,94,0.4)",
+                }}
+              >
+                <span
+                  className="absolute top-3 right-3 text-[10px] font-black px-2 py-0.5 rounded-full text-green-950"
+                  style={{ background: "#fde047" }}
+                >
+                  ⚽ MUNDIAL
+                </span>
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0 w-[100px] aspect-[260/390]">
+                    <FarisCharacter state="idle" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-amber-50">Faris</p>
+                    <p className="text-xs text-green-400/70 mb-1">World Cup Captain · Limited Edition</p>
+                    <p className="text-xs text-amber-200/55">
+                      High-energy and motivational. Treats every answer like a goal. Bring your A-game.
+                    </p>
+                  </div>
+                </div>
+              </button>
             </div>
           </div>
         )}
@@ -438,6 +475,8 @@ export default function ConversationPage() {
                   <JasmineCharacter state={characterState} />
                 ) : selectedCharacter === "tariq" ? (
                   <TariqCharacter state={characterState} />
+                ) : selectedCharacter === "faris" ? (
+                  <FarisCharacter state={characterState} />
                 ) : (
                   <JinnCharacter state={characterState} />
                 )}

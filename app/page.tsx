@@ -155,6 +155,34 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* ── Mundial Edition banner ── */}
+        <Link
+          href="/play/conversation"
+          className="group relative overflow-hidden rounded-3xl p-5 flex items-center gap-4 transition hover:scale-[1.01]"
+          style={{
+            background: "linear-gradient(110deg, rgba(34,197,94,0.22) 0%, rgba(21,128,61,0.12) 45%, rgba(253,224,71,0.14) 100%)",
+            border: "1px solid rgba(253,224,71,0.4)",
+          }}
+        >
+          {/* pitch stripes */}
+          <div className="pointer-events-none absolute inset-0 opacity-[0.06]" aria-hidden
+            style={{ background: "repeating-linear-gradient(90deg, #fff 0 18px, transparent 18px 36px)" }} />
+          <span className="text-4xl flex-shrink-0 drop-shadow">🏆</span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black px-2 py-0.5 rounded-full text-green-950" style={{ background: "#fde047" }}>
+                ⚽ MUNDIAL EDITION
+              </span>
+              <span className="text-[10px] font-semibold text-amber-300/50">Limited time</span>
+            </div>
+            <h2 className="text-lg font-black text-amber-50 mt-1">World Cup Special is here</h2>
+            <p className="text-sm text-amber-200/60 leading-snug">
+              Meet <span className="font-bold text-green-300">Faris</span>, the World Cup captain, and train your football Arabic — كرة القدم, هدف, كأس.
+            </p>
+          </div>
+          <ChevronRight className="hidden sm:block h-5 w-5 text-amber-300/50 group-hover:translate-x-0.5 transition-transform flex-shrink-0" />
+        </Link>
+
         {/* ── word showcase ── */}
         <WordShowcase />
 
@@ -219,7 +247,7 @@ export default function HomePage() {
               <div>
                 <h2 className="text-lg font-bold text-amber-50">Quick Quiz</h2>
                 <p className="text-sm text-amber-200/55 mt-0.5 leading-snug">
-                  All 36 words, random order, 5 hearts. Race for XP — no chapter required.
+                  Every category, random order, 5 hearts. Race for XP — no chapter required.
                 </p>
               </div>
               <div className="flex items-center gap-1.5 text-xs text-amber-400/60 font-medium">
@@ -251,11 +279,11 @@ export default function HomePage() {
               <div>
                 <h2 className="text-lg font-bold text-amber-50">Conversation</h2>
                 <p className="text-sm text-amber-200/55 mt-0.5 leading-snug">
-                  6 guided exchanges with Zafar or Qamar. Speak Arabic, get evaluated in real time.
+                  6 guided exchanges with one of 5 teachers. Speak Arabic, get evaluated in real time.
                 </p>
               </div>
               <div className="flex items-center gap-1.5 text-xs text-emerald-400/60 font-medium">
-                <span>3 topics · choose your teacher</span>
+                <span>4 topics · incl. ⚽ World Cup</span>
                 <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
               </div>
             </Link>
