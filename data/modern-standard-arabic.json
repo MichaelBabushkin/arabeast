@@ -85,5 +85,16 @@
   {"id": "verbs-5", "category": "verbs", "english": "To speak", "standardArabic": "يتكلم", "standardArabicTransliteration": "yatakallam", "audio": "", "image": ""},
   {"id": "verbs-6", "category": "verbs", "english": "To read", "standardArabic": "يقرأ", "standardArabicTransliteration": "yaqraʾ", "audio": "", "image": ""},
   {"id": "verbs-7", "category": "verbs", "english": "To love", "standardArabic": "يحب", "standardArabicTransliteration": "yuḥibb", "audio": "", "image": ""},
-  {"id": "verbs-8", "category": "verbs", "english": "To know", "standardArabic": "يعرف", "standardArabicTransliteration": "yaʿrif", "audio": "", "image": ""}
+  {"id": "verbs-8", "category": "verbs", "english": "To know", "standardArabic": "يعرف", "standardArabicTransliteration": "yaʿrif", "audio": "", "image": ""},
+
+  {"id": "football-1",  "category": "football", "english": "Football",   "standardArabic": "كرة القدم",  "standardArabicTransliteration": "kurat al-qadam", "audio": "", "image": "https://placehold.co/256x256?text=⚽"},
+  {"id": "football-2",  "category": "football", "english": "Goal",       "standardArabic": "هدف",       "standardArabicTransliteration": "hadaf",          "audio": "", "image": "https://placehold.co/256x256?text=🥅"},
+  {"id": "football-3",  "category": "football", "english": "Player",     "standardArabic": "لاعب",      "standardArabicTransliteration": "lāʿib",          "audio": "", "image": "https://placehold.co/256x256?text=🏃"},
+  {"id": "football-4",  "category": "football", "english": "Team",       "standardArabic": "فريق",      "standardArabicTransliteration": "farīq",          "audio": "", "image": "https://placehold.co/256x256?text=👥"},
+  {"id": "football-5",  "category": "football", "english": "Match",      "standardArabic": "مباراة",    "standardArabicTransliteration": "mubārāh",        "audio": "", "image": "https://placehold.co/256x256?text=🆚"},
+  {"id": "football-6",  "category": "football", "english": "Stadium",    "standardArabic": "ملعب",      "standardArabicTransliteration": "malʿab",         "audio": "", "image": "https://placehold.co/256x256?text=🏟️"},
+  {"id": "football-7",  "category": "football", "english": "Cup",        "standardArabic": "كأس",       "standardArabicTransliteration": "kaʾs",           "audio": "", "image": "https://placehold.co/256x256?text=🏆"},
+  {"id": "football-8",  "category": "football", "english": "Victory",    "standardArabic": "فوز",       "standardArabicTransliteration": "fawz",           "audio": "", "image": "https://placehold.co/256x256?text=🎉"},
+  {"id": "football-9",  "category": "football", "english": "Referee",    "standardArabic": "حكم",       "standardArabicTransliteration": "ḥakam",          "audio": "", "image": "https://placehold.co/256x256?text=🧑‍⚖️"},
+  {"id": "football-10", "category": "football", "english": "Goalkeeper", "standardArabic": "حارس المرمى", "standardArabicTransliteration": "ḥāris al-marmā", "audio": "", "image": "https://placehold.co/256x256?text=🧤"}
 ]
