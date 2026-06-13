@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Lock, Check, X, Volume2, Trophy, Shirt } from "lucide-react";
 import FarisCharacter from "@/components/faris/FarisCharacter";
+import { WC_LOGO_URL, HAS_WC_LOGO, WC_HOST_TAGLINE } from "@/lib/worldcupBranding";
 import { speakJinn } from "@/lib/speech";
 import { useSettings } from "@/lib/useSettings";
 import { useAlbum } from "@/lib/useAlbum";
@@ -177,37 +178,63 @@ export default function AlbumPage() {
 
         {/* header */}
         <div
-          className="relative overflow-hidden rounded-3xl p-5 flex items-center gap-4"
+          className="relative overflow-hidden rounded-3xl p-5 sm:p-6 flex items-center gap-5"
           style={{
-            background:
-              "linear-gradient(110deg, rgba(34,197,94,0.22) 0%, rgba(21,128,61,0.12) 50%, rgba(253,224,71,0.14) 100%)",
-            border: "1px solid rgba(253,224,71,0.4)",
+            background: "linear-gradient(115deg, #06210f 0%, #0f3d22 45%, #14532d 75%, #1c5a2e 100%)",
+            border: "1px solid rgba(253,224,71,0.45)",
           }}
         >
+          {/* pitch mowing stripes */}
           <div
-            className="pointer-events-none absolute inset-0 opacity-[0.06]"
+            className="pointer-events-none absolute inset-0 opacity-[0.07]"
             aria-hidden
-            style={{ background: "repeating-linear-gradient(90deg, #fff 0 18px, transparent 18px 36px)" }}
+            style={{ background: "repeating-linear-gradient(90deg, #fff 0 22px, transparent 22px 44px)" }}
           />
-          <div className="w-[70px] flex-shrink-0 aspect-[260/390]">
-            <FarisCharacter state="idle" />
-          </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-black text-amber-50">World Cup Album</h1>
-            <p
-              className="text-base text-amber-200/70"
-              style={{ fontFamily: NAF, direction: "rtl" }}
+          {/* stadium-light glow */}
+          <div
+            className="pointer-events-none absolute -top-16 -right-10 h-48 w-48 rounded-full"
+            aria-hidden
+            style={{ background: "radial-gradient(circle, rgba(253,224,71,0.25) 0%, transparent 70%)" }}
+          />
+          {/* faint football watermark */}
+          <span className="pointer-events-none absolute -bottom-10 right-8 text-[130px] opacity-[0.06] select-none" aria-hidden>⚽</span>
+
+          {/* WC26 logo (falls back to mascot until the full URL is set) */}
+          {HAS_WC_LOGO ? (
+            <img
+              src={WC_LOGO_URL}
+              alt="FIFA World Cup 2026"
+              className="relative h-20 sm:h-24 w-auto object-contain flex-shrink-0 drop-shadow-lg"
+            />
+          ) : (
+            <div className="relative w-[64px] flex-shrink-0 aspect-[260/390]">
+              <FarisCharacter state="idle" />
+            </div>
+          )}
+
+          <div className="relative flex-1 min-w-0">
+            <span
+              className="inline-block text-[10px] font-black px-2 py-0.5 rounded-full text-green-950 mb-1.5"
+              style={{ background: "#fde047" }}
             >
+              ⚽ {WC_HOST_TAGLINE}
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-black text-white">World Cup Album</h1>
+            <p className="text-base sm:text-lg text-yellow-200/80" style={{ fontFamily: NAF, direction: "rtl" }}>
               ألبوم كأس العالم
             </p>
-            <p className="text-sm text-amber-200/60 mt-1">
+            <p className="text-sm text-green-100/70 mt-1">
               Collect a card for every team and match — earned in Arabic.
             </p>
           </div>
-          <div className="hidden sm:flex flex-col items-center justify-center px-4">
-            <Trophy className="h-6 w-6 text-yellow-300 mb-1" />
-            <p className="text-xl font-black text-amber-50">{collected}</p>
-            <p className="text-[10px] text-amber-300/50">of {total}</p>
+
+          <div
+            className="relative hidden sm:flex flex-col items-center justify-center rounded-2xl px-4 py-3"
+            style={{ background: "rgba(0,0,0,0.25)", border: "1px solid rgba(253,224,71,0.3)" }}
+          >
+            <Trophy className="h-7 w-7 text-yellow-300 mb-1" />
+            <p className="text-2xl font-black text-white">{collected}</p>
+            <p className="text-[10px] text-yellow-200/60">of {total}</p>
           </div>
         </div>
 

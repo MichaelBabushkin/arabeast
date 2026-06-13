@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowLeft, Lock, Check, ChevronRight } from "lucide-react";
 import FarisCharacter from "@/components/faris/FarisCharacter";
+import { WC_LOGO_URL, HAS_WC_LOGO, WC_HOST_TAGLINE } from "@/lib/worldcupBranding";
 import { useWcProgress } from "@/lib/useWcProgress";
 import { BASICS, ADVANCED } from "@/lib/footballVocab";
 
@@ -13,7 +14,7 @@ export default function WorldCupHub() {
 
   return (
     <main className="min-h-screen flex flex-col">
-      <div className="relative mx-auto w-full max-w-2xl flex flex-col gap-6 px-4 py-6">
+      <div className="relative w-full flex flex-col gap-6 px-4 sm:px-8 lg:px-16 py-6">
         {/* nav */}
         <div className="flex items-center gap-3">
           <Link
@@ -30,34 +31,58 @@ export default function WorldCupHub() {
 
         {/* header */}
         <div
-          className="relative overflow-hidden rounded-3xl p-5 flex items-center gap-4"
+          className="relative overflow-hidden rounded-3xl p-5 sm:p-6 flex items-center gap-5"
           style={{
-            background:
-              "linear-gradient(110deg, rgba(34,197,94,0.22) 0%, rgba(21,128,61,0.12) 50%, rgba(253,224,71,0.14) 100%)",
-            border: "1px solid rgba(253,224,71,0.4)",
+            background: "linear-gradient(115deg, #06210f 0%, #0f3d22 45%, #14532d 75%, #1c5a2e 100%)",
+            border: "1px solid rgba(253,224,71,0.45)",
           }}
         >
+          {/* pitch mowing stripes */}
           <div
-            className="pointer-events-none absolute inset-0 opacity-[0.06]"
+            className="pointer-events-none absolute inset-0 opacity-[0.07]"
             aria-hidden
-            style={{ background: "repeating-linear-gradient(90deg, #fff 0 18px, transparent 18px 36px)" }}
+            style={{ background: "repeating-linear-gradient(90deg, #fff 0 22px, transparent 22px 44px)" }}
           />
-          <div className="w-[80px] flex-shrink-0 aspect-[260/390]">
-            <FarisCharacter state="idle" />
-          </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-black text-amber-50">Road to the Cup</h1>
-            <p className="text-base text-amber-200/70" style={{ fontFamily: "var(--font-noto-naskh), serif", direction: "rtl" }}>
+          {/* stadium-light glow */}
+          <div
+            className="pointer-events-none absolute -top-16 -right-10 h-48 w-48 rounded-full"
+            aria-hidden
+            style={{ background: "radial-gradient(circle, rgba(253,224,71,0.25) 0%, transparent 70%)" }}
+          />
+          {/* faint football watermark */}
+          <span className="pointer-events-none absolute -bottom-10 right-8 text-[130px] opacity-[0.06] select-none" aria-hidden>⚽</span>
+
+          {HAS_WC_LOGO ? (
+            <img
+              src={WC_LOGO_URL}
+              alt="FIFA World Cup 2026"
+              className="relative h-20 sm:h-24 w-auto object-contain flex-shrink-0 drop-shadow-lg"
+            />
+          ) : (
+            <div className="relative w-[72px] flex-shrink-0 aspect-[260/390]">
+              <FarisCharacter state="idle" />
+            </div>
+          )}
+
+          <div className="relative flex-1 min-w-0">
+            <span
+              className="inline-block text-[10px] font-black px-2 py-0.5 rounded-full text-green-950 mb-1.5"
+              style={{ background: "#fde047" }}
+            >
+              ⚽ {WC_HOST_TAGLINE}
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-black text-white">Road to the Cup</h1>
+            <p className="text-base sm:text-lg text-yellow-200/80" style={{ fontFamily: "var(--font-noto-naskh), serif", direction: "rtl" }}>
               الطريق إلى الكأس
             </p>
-            <p className="text-sm text-amber-200/60 mt-1">
+            <p className="text-sm text-green-100/70 mt-1">
               Train your football Arabic with Faris, then follow the real World Cup.
             </p>
           </div>
         </div>
 
         {/* journey */}
-        <div className="flex flex-col gap-3">
+        <div className="grid gap-4 md:grid-cols-3">
           <ChapterCard
             n={1}
             title="The Basics"

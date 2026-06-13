@@ -29,6 +29,9 @@ export default [
     rules: {
       ...tseslint.configs.recommended.rules,
       ...nextPlugin.configs['core-web-vitals'].rules,
+      // FIFA flags and the World Cup logo load via <img> (em-based flag sizing
+      // + external CDN URLs that don't fit next/image's intrinsic-size model).
+      '@next/next/no-img-element': 'off',
     },
   },
 ];
