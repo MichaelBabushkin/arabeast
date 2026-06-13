@@ -18,6 +18,19 @@ import {
   type WCOutcome,
 } from "@/lib/worldcup";
 
+/** Emoji flag when we have one, otherwise the FIFA tricode as a badge. */
+function Flag({ t, className }: { t: WCTeam; className?: string }) {
+  if (t.flag) return <span className={className}>{t.flag}</span>;
+  return (
+    <span
+      className={`inline-flex items-center justify-center rounded bg-white/10 px-1.5 font-black tracking-tight text-amber-200/80 ${className ?? ""}`}
+      style={{ fontSize: "0.5em", lineHeight: 1.6 }}
+    >
+      {t.abbr}
+    </span>
+  );
+}
+
 function shuffle<T>(arr: T[]): T[] {
   const c = [...arr];
   for (let i = c.length - 1; i > 0; i -= 1) {
@@ -161,7 +174,7 @@ export default function WorldCupPage() {
 
         {data?.source === "curated" && (
           <p className="-mt-3 text-[11px] text-amber-300/40">
-            Showing sample fixtures — add <code className="text-amber-300/70">FOOTBALL_API_KEY</code> for live World Cup data.
+            Showing sample fixtures — live FIFA data is momentarily unavailable.
           </p>
         )}
 
@@ -208,7 +221,7 @@ export default function WorldCupPage() {
                       <span className="absolute top-1.5 right-1.5 text-[10px]">⭐</span>
                     )}
                     <span className="text-3xl" style={{ filter: got ? "none" : "grayscale(1) opacity(0.35)" }}>
-                      {got ? t.flag : <Lock className="h-6 w-6 text-amber-300/30" />}
+                      {got ? <Flag t={t} /> : <Lock className="h-6 w-6 text-amber-300/30" />}
                     </span>
                     {got ? (
                       <>
@@ -302,7 +315,7 @@ function MatchCard({
           : "1px solid rgba(255,255,255,0.08)",
       }}
     >
-      <span className="text-2xl flex-shrink-0">{m.home.flag}</span>
+      <Flag t={m.home} className="text-2xl flex-shrink-0" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 text-sm font-bold text-amber-50" style={{ fontFamily: NAF, direction: "rtl" }}>
           <span className="truncate">{m.home.arabic}</span>
@@ -324,7 +337,7 @@ function MatchCard({
           )}
         </p>
       </div>
-      <span className="text-2xl flex-shrink-0">{m.away.flag}</span>
+      <Flag t={m.away} className="text-2xl flex-shrink-0" />
     </button>
   );
 }
@@ -362,7 +375,7 @@ function TeamModal({
       {won ? (
         <div className="flex flex-col items-center gap-3 text-center">
           <Sparkles className="h-7 w-7 text-yellow-300" />
-          <span className="text-6xl">{team.flag}</span>
+          <Flag t={team} className="text-6xl" />
           <p className="text-2xl font-black text-amber-50" style={{ fontFamily: NAF, direction: "rtl" }}>
             {team.arabic}
           </p>
@@ -386,7 +399,7 @@ function TeamModal({
         </div>
       ) : (
         <div className="flex flex-col items-center gap-4 text-center">
-          <span className="text-6xl">{team.flag}</span>
+          <Flag t={team} className="text-6xl" />
           <p className="text-sm text-amber-200/70">
             Faris asks: which one is <span className="font-bold text-amber-100">{team.english}</span> in Arabic?
           </p>
@@ -448,12 +461,12 @@ function MatchModal({
   const Heading = (
     <div className="flex items-center justify-center gap-3 text-center">
       <div className="flex flex-col items-center">
-        <span className="text-4xl">{m.home.flag}</span>
+        <Flag t={m.home} className="text-4xl" />
         <span className="text-sm font-bold text-amber-100" style={{ fontFamily: NAF, direction: "rtl" }}>{m.home.arabic}</span>
       </div>
       <span className="text-amber-300/40 font-black">ضد</span>
       <div className="flex flex-col items-center">
-        <span className="text-4xl">{m.away.flag}</span>
+        <Flag t={m.away} className="text-4xl" />
         <span className="text-sm font-bold text-amber-100" style={{ fontFamily: NAF, direction: "rtl" }}>{m.away.arabic}</span>
       </div>
     </div>

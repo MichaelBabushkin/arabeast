@@ -5,13 +5,13 @@ import teamsRaw from "@/data/wc-teams-arabic.json";
    ────────────────────────────────────────────────────────── */
 
 export type WCTeam = {
-  code: string;
+  code: string;          // FIFA IdCountry tricode (MEX, RSA, MAR…)
   english: string;
-  aliases: string[];
-  arabic: string;
-  translit: string;
-  flag: string;
-  arab: boolean;
+  arabic: string;        // official FIFA Arabic name when live
+  translit: string;      // from our curated map (enrichment), else ""
+  flag: string;          // emoji from curated map, else "" → render abbr badge
+  abbr: string;          // FIFA 3-letter tricode, used when no emoji
+  arab: boolean;         // Arab nation → ⭐ in the album
 };
 
 export type WCStatus = "SCHEDULED" | "TIMED" | "IN_PLAY" | "FINISHED";
@@ -21,8 +21,8 @@ export type WCMatch = {
   id: string;
   utcDate: string;        // ISO
   status: WCStatus;
-  stage: string;          // e.g. "GROUP_STAGE", "LAST_16"
-  group: string | null;   // e.g. "Group A"
+  stage: string;          // Arabic stage name when live
+  group: string | null;   // Arabic group name when live
   home: WCTeam;
   away: WCTeam;
   score: { home: number | null; away: number | null };
@@ -37,38 +37,23 @@ export type WCData = {
 };
 
 /* ──────────────────────────────────────────────────────────
-   Team mapping + lookup (pure, client-safe)
+   Curated team enrichment (pure, client-safe)
+   FIFA gives us official Arabic names + tricodes; we only use the
+   curated map to add emoji flags, transliteration and the Arab flag.
    ────────────────────────────────────────────────────────── */
 
-export const WC_TEAMS = teamsRaw as WCTeam[];
+type CuratedTeam = {
+  code: string; english: string; aliases: string[];
+  arabic: string; translit: string; flag: string; arab: boolean;
+};
 
-const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, "");
+export const WC_TEAMS = teamsRaw as CuratedTeam[];
 
-const TEAM_BY_NAME = new Map<string, WCTeam>();
-for (const t of WC_TEAMS) {
-  TEAM_BY_NAME.set(norm(t.english), t);
-  TEAM_BY_NAME.set(norm(t.code), t);
-  for (const a of t.aliases) TEAM_BY_NAME.set(norm(a), t);
-}
+const CURATED_BY_CODE = new Map<string, CuratedTeam>();
+for (const t of WC_TEAMS) CURATED_BY_CODE.set(t.code, t);
 
-/** Resolve an external (English) team name to our Arabic-aware team. */
-export function resolveTeam(name: string): WCTeam {
-  const hit = TEAM_BY_NAME.get(norm(name));
-  if (hit) return hit;
-  // synthesise a minimal entry for teams not in our curated map
-  return {
-    code: norm(name).slice(0, 3).toUpperCase() || "UNK",
-    english: name,
-    aliases: [],
-    arabic: name,
-    translit: name,
-    flag: "🏳️",
-    arab: false,
-  };
-}
-
-export function getTeamByCode(code: string): WCTeam | undefined {
-  return WC_TEAMS.find((t) => t.code === code);
+export function getTeamByCode(code: string): CuratedTeam | undefined {
+  return CURATED_BY_CODE.get(code);
 }
 
 /* ──────────────────────────────────────────────────────────
@@ -87,7 +72,7 @@ export function arabicScore(home: number | null, away: number | null): string {
   return `${toArabicNumerals(home)} – ${toArabicNumerals(away)}`;
 }
 
-/** Spoken Arabic phrase for a finished result, from the winner's side. */
+/** Spoken Arabic phrase for a finished result. */
 export function arabicResultPhrase(m: WCMatch): string {
   if (m.score.home == null || m.score.away == null) return "";
   const h = toArabicNumerals(m.score.home);
@@ -111,90 +96,134 @@ export function isSameDay(iso: string, ref: Date = new Date()): boolean {
 }
 
 /* ──────────────────────────────────────────────────────────
-   Data provider — live (football-data.org) with curated fallback
-   Server-side only (uses FOOTBALL_API_KEY). Cached in-memory.
+   Official FIFA data provider (no API key) with curated fallback.
+   Server-side only. Cached in-memory.
    ────────────────────────────────────────────────────────── */
 
-type RawFD = {
-  matches?: Array<{
-    id: number;
-    utcDate: string;
-    status: string;
-    stage: string;
-    group: string | null;
-    homeTeam: { name: string };
-    awayTeam: { name: string };
-    score: {
-      winner: "HOME_TEAM" | "AWAY_TEAM" | "DRAW" | null;
-      fullTime: { home: number | null; away: number | null };
-    };
-  }>;
-};
+// 2026 FIFA World Cup (Canada/Mexico/USA)
+const FIFA_COMPETITION = "17";
+const FIFA_SEASON = "285023";
+const FIFA_URL = (lang: string) =>
+  `https://api.fifa.com/api/v3/calendar/matches?idCompetition=${FIFA_COMPETITION}&idSeason=${FIFA_SEASON}&count=200&language=${lang}`;
 
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+type FifaName = { Locale: string; Description: string };
+type FifaTeam = {
+  IdCountry: string;
+  Abbreviation: string;
+  TeamName: FifaName[];
+  Score: number | null;
+} | null;
+type FifaMatch = {
+  IdMatch: string;
+  Date: string;
+  IdStage: string;
+  StageName: FifaName[];
+  GroupName: FifaName[] | null;
+  Home: FifaTeam;
+  Away: FifaTeam;
+  HomeTeamScore: number | null;
+  AwayTeamScore: number | null;
+};
+type FifaResponse = { Results: FifaMatch[] };
+
+const desc = (arr?: FifaName[] | null) => arr?.[0]?.Description ?? "";
+
+function buildTeam(t: NonNullable<FifaTeam>, englishName: string): WCTeam {
+  const c = CURATED_BY_CODE.get(t.IdCountry);
+  return {
+    code: t.IdCountry,
+    english: englishName || desc(t.TeamName),
+    arabic: desc(t.TeamName),
+    translit: c?.translit ?? "",
+    flag: c?.flag ?? "",
+    abbr: t.Abbreviation || t.IdCountry,
+    arab: c?.arab ?? false,
+  };
+}
+
+const CACHE_TTL_MS = 5 * 60 * 1000;
 let cache: { at: number; data: WCData } | null = null;
 
-function mapStatus(s: string): WCStatus {
-  if (s === "FINISHED" || s === "AWARDED") return "FINISHED";
-  if (s === "IN_PLAY" || s === "PAUSED") return "IN_PLAY";
-  if (s === "TIMED") return "TIMED";
-  return "SCHEDULED";
-}
-
-function mapWinner(w: string | null): WCOutcome | null {
-  if (w === "HOME_TEAM") return "HOME";
-  if (w === "AWAY_TEAM") return "AWAY";
-  if (w === "DRAW") return "DRAW";
-  return null;
-}
-
-async function fetchLive(apiKey: string): Promise<WCData | null> {
+async function fetchFifa(): Promise<WCData | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
   try {
-    const res = await fetch("https://api.football-data.org/v4/competitions/WC/matches", {
-      headers: { "X-Auth-Token": apiKey },
-      // Next caches the upstream fetch; we still keep our own TTL layer.
-      next: { revalidate: 300 },
-    });
-    if (!res.ok) return null;
+    const [arRes, enRes] = await Promise.all([
+      fetch(FIFA_URL("ar"), {
+        headers: { Accept: "application/json" },
+        signal: controller.signal,
+        next: { revalidate: 300 },
+      }),
+      fetch(FIFA_URL("en"), {
+        headers: { Accept: "application/json" },
+        signal: controller.signal,
+        next: { revalidate: 300 },
+      }),
+    ]);
+    if (!arRes.ok) return null;
 
-    const raw = (await res.json()) as RawFD;
-    if (!raw.matches?.length) return null;
+    const arJson = (await arRes.json()) as FifaResponse;
+    const enJson = enRes.ok ? ((await enRes.json()) as FifaResponse) : { Results: [] };
+    if (!arJson.Results?.length) return null;
 
-    const matches: WCMatch[] = raw.matches.map((m) => ({
-      id: String(m.id),
-      utcDate: m.utcDate,
-      status: mapStatus(m.status),
-      stage: m.stage,
-      group: m.group,
-      home: resolveTeam(m.homeTeam.name),
-      away: resolveTeam(m.awayTeam.name),
-      score: { home: m.score.fullTime.home, away: m.score.fullTime.away },
-      winner: mapWinner(m.score.winner),
-    }));
+    // English names keyed by match id (for the team quiz prompt)
+    const enNames = new Map<string, { home: string; away: string }>();
+    for (const m of enJson.Results) {
+      enNames.set(m.IdMatch, { home: desc(m.Home?.TeamName), away: desc(m.Away?.TeamName) });
+    }
 
-    const present = new Set<string>();
+    const matches: WCMatch[] = [];
+    for (const m of arJson.Results) {
+      if (!m.Home || !m.Away) continue; // skip TBD knockout slots
+      const en = enNames.get(m.IdMatch);
+      const home = buildTeam(m.Home, en?.home ?? "");
+      const away = buildTeam(m.Away, en?.away ?? "");
+      const hs = m.HomeTeamScore ?? m.Home.Score ?? null;
+      const as = m.AwayTeamScore ?? m.Away.Score ?? null;
+      const finished = hs != null && as != null;
+      matches.push({
+        id: m.IdMatch,
+        utcDate: m.Date,
+        status: finished ? "FINISHED" : isSameDay(m.Date) ? "TIMED" : "SCHEDULED",
+        stage: desc(m.StageName),
+        group: desc(m.GroupName) || null,
+        home,
+        away,
+        score: { home: hs, away: as },
+        winner: finished ? (hs! > as! ? "HOME" : hs! < as! ? "AWAY" : "DRAW") : null,
+      });
+    }
+    if (!matches.length) return null;
+
+    const seen = new Set<string>();
     const teams: WCTeam[] = [];
     for (const m of matches) {
       for (const t of [m.home, m.away]) {
-        if (!present.has(t.code)) {
-          present.add(t.code);
-          teams.push(t);
-        }
+        if (!seen.has(t.code)) { seen.add(t.code); teams.push(t); }
       }
     }
 
     return { source: "live", fetchedAt: new Date().toISOString(), teams, matches };
   } catch {
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
-/* ── Curated fallback: keeps the album alive without an API key. ──
-   Fixtures are generated relative to "now" so there is always a
-   played match (yesterday), a match today, and an upcoming one. */
+/* ── Curated fallback: keeps the album alive if FIFA is unreachable.
+   Fixtures are generated relative to "now" so there is always a played
+   match (yesterday), one today, and upcoming ones. ── */
+
+function curatedTeam(code: string): WCTeam {
+  const c = getTeamByCode(code)!;
+  return {
+    code: c.code, english: c.english, arabic: c.arabic,
+    translit: c.translit, flag: c.flag, abbr: c.code, arab: c.arab,
+  };
+}
 
 function curatedData(): WCData {
-  const pick = (code: string) => getTeamByCode(code)!;
   const day = 24 * 60 * 60 * 1000;
   const now = Date.now();
   const at = (offsetDays: number, hour: number) => {
@@ -203,19 +232,16 @@ function curatedData(): WCData {
     return d.toISOString();
   };
 
-  const fixtures: Array<{
-    h: string; a: string; off: number; hr: number;
-    sh: number | null; sa: number | null; group: string;
-  }> = [
-    { h: "MAR", a: "ESP", off: -1, hr: 18, sh: 2, sa: 0, group: "Group A" },
-    { h: "BRA", a: "KSA", off: -1, hr: 21, sh: 1, sa: 1, group: "Group B" },
-    { h: "ARG", a: "EGY", off: 0,  hr: 18, sh: null, sa: null, group: "Group C" },
-    { h: "FRA", a: "TUN", off: 0,  hr: 21, sh: null, sa: null, group: "Group D" },
-    { h: "POR", a: "ALG", off: 1,  hr: 18, sh: null, sa: null, group: "Group E" },
-    { h: "GER", a: "JPN", off: 1,  hr: 21, sh: null, sa: null, group: "Group F" },
-    { h: "ENG", a: "SEN", off: 2,  hr: 18, sh: null, sa: null, group: "Group G" },
-    { h: "NED", a: "QAT", off: 2,  hr: 21, sh: null, sa: null, group: "Group H" },
-  ];
+  const fixtures = [
+    { h: "MAR", a: "ESP", off: -1, hr: 18, sh: 2, sa: 0, group: "المجموعة أ" },
+    { h: "BRA", a: "KSA", off: -1, hr: 21, sh: 1, sa: 1, group: "المجموعة ب" },
+    { h: "ARG", a: "EGY", off: 0,  hr: 18, sh: null, sa: null, group: "المجموعة ج" },
+    { h: "FRA", a: "TUN", off: 0,  hr: 21, sh: null, sa: null, group: "المجموعة د" },
+    { h: "POR", a: "ALG", off: 1,  hr: 18, sh: null, sa: null, group: "المجموعة هـ" },
+    { h: "GER", a: "JPN", off: 1,  hr: 21, sh: null, sa: null, group: "المجموعة و" },
+    { h: "ENG", a: "SEN", off: 2,  hr: 18, sh: null, sa: null, group: "المجموعة ز" },
+    { h: "NED", a: "QAT", off: 2,  hr: 21, sh: null, sa: null, group: "المجموعة ح" },
+  ] as const;
 
   const matches: WCMatch[] = fixtures.map((f, i) => {
     const played = f.sh != null && f.sa != null;
@@ -223,20 +249,20 @@ function curatedData(): WCData {
       id: `curated-${i}`,
       utcDate: at(f.off, f.hr),
       status: played ? "FINISHED" : f.off === 0 ? "TIMED" : "SCHEDULED",
-      stage: "GROUP_STAGE",
+      stage: "المرحلة الأولى",
       group: f.group,
-      home: pick(f.h),
-      away: pick(f.a),
+      home: curatedTeam(f.h),
+      away: curatedTeam(f.a),
       score: { home: f.sh, away: f.sa },
       winner: played ? (f.sh! > f.sa! ? "HOME" : f.sh! < f.sa! ? "AWAY" : "DRAW") : null,
     };
   });
 
-  const present = new Set<string>();
+  const seen = new Set<string>();
   const teams: WCTeam[] = [];
   for (const m of matches) {
     for (const t of [m.home, m.away]) {
-      if (!present.has(t.code)) { present.add(t.code); teams.push(t); }
+      if (!seen.has(t.code)) { seen.add(t.code); teams.push(t); }
     }
   }
 
@@ -246,10 +272,7 @@ function curatedData(): WCData {
 /** Cached entry point used by the API route. */
 export async function getWorldCupData(): Promise<WCData> {
   if (cache && Date.now() - cache.at < CACHE_TTL_MS) return cache.data;
-
-  const apiKey = process.env.FOOTBALL_API_KEY;
-  const data = (apiKey && (await fetchLive(apiKey))) || curatedData();
-
+  const data = (await fetchFifa()) || curatedData();
   cache = { at: Date.now(), data };
   return data;
 }
