@@ -6,12 +6,29 @@ import teamsRaw from "@/data/wc-teams-arabic.json";
 
 export type WCTeam = {
   code: string;          // FIFA IdCountry tricode (MEX, RSA, MAR…)
+  idTeam: string;        // FIFA IdTeam (numeric, used for squad lookups)
   english: string;
   arabic: string;        // official FIFA Arabic name when live
   translit: string;      // from our curated map (enrichment), else ""
   flag: string;          // emoji from curated map, else "" → render abbr badge
   abbr: string;          // FIFA 3-letter tricode, used when no emoji
   arab: boolean;         // Arab nation → ⭐ in the album
+};
+
+/** Squad — fetched per team for the album's team profiles. */
+export const POSITION_AR = ["حارس المرمى", "مدافع", "لاعب وسط", "مهاجم"] as const;
+export const POSITION_EN = ["Goalkeeper", "Defender", "Midfielder", "Forward"] as const;
+
+export type WCPlayer = {
+  id: string;
+  name: string;          // Arabic name (official FIFA)
+  number: number;
+  position: 0 | 1 | 2 | 3; // index into POSITION_AR/POSITION_EN
+  photo?: string;        // FIFA headshot URL, if available
+};
+
+export type WCSquad = {
+  players: WCPlayer[];
 };
 
 export type WCStatus = "SCHEDULED" | "TIMED" | "IN_PLAY" | "FINISHED";
@@ -108,6 +125,7 @@ const FIFA_URL = (lang: string) =>
 
 type FifaName = { Locale: string; Description: string };
 type FifaTeam = {
+  IdTeam: string;
   IdCountry: string;
   Abbreviation: string;
   TeamName: FifaName[];
@@ -132,6 +150,7 @@ function buildTeam(t: NonNullable<FifaTeam>, englishName: string): WCTeam {
   const c = CURATED_BY_CODE.get(t.IdCountry);
   return {
     code: t.IdCountry,
+    idTeam: t.IdTeam,
     english: englishName || desc(t.TeamName),
     arabic: desc(t.TeamName),
     translit: c?.translit ?? "",
@@ -218,7 +237,7 @@ async function fetchFifa(): Promise<WCData | null> {
 function curatedTeam(code: string): WCTeam {
   const c = getTeamByCode(code)!;
   return {
-    code: c.code, english: c.english, arabic: c.arabic,
+    code: c.code, idTeam: "", english: c.english, arabic: c.arabic,
     translit: c.translit, flag: c.flag, abbr: c.code, arab: c.arab,
   };
 }
@@ -275,4 +294,59 @@ export async function getWorldCupData(): Promise<WCData> {
   const data = (await fetchFifa()) || curatedData();
   cache = { at: Date.now(), data };
   return data;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Squad lookup for team profiles (official FIFA, Arabic names)
+   ────────────────────────────────────────────────────────── */
+
+type FifaPlayer = {
+  IdPlayer: string;
+  PlayerName: FifaName[];
+  JerseyNum: number;
+  Position: number;
+  PlayerPicture?: { PictureUrl?: string } | null;
+};
+type FifaSquad = { Players?: FifaPlayer[] };
+
+const SQUAD_TTL_MS = 60 * 60 * 1000; // 1 hour
+const squadCache = new Map<string, { at: number; data: WCSquad }>();
+
+const clampPos = (n: number): 0 | 1 | 2 | 3 =>
+  (n === 1 || n === 2 || n === 3 ? n : 0);
+
+export async function getTeamSquad(idTeam: string): Promise<WCSquad | null> {
+  if (!idTeam) return null;
+  const hit = squadCache.get(idTeam);
+  if (hit && Date.now() - hit.at < SQUAD_TTL_MS) return hit.data;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(
+      `https://api.fifa.com/api/v3/teams/${idTeam}/squad?idCompetition=${FIFA_COMPETITION}&idSeason=${FIFA_SEASON}&count=40&language=ar`,
+      { headers: { Accept: "application/json" }, signal: controller.signal, next: { revalidate: 3600 } },
+    );
+    if (!res.ok) return null;
+    const json = (await res.json()) as FifaSquad;
+    const players: WCPlayer[] = (json.Players ?? [])
+      .map((p) => ({
+        id: p.IdPlayer,
+        name: desc(p.PlayerName),
+        number: p.JerseyNum ?? 0,
+        position: clampPos(p.Position),
+        photo: p.PlayerPicture?.PictureUrl || undefined,
+      }))
+      .filter((p) => p.name)
+      .sort((a, b) => a.position - b.position || a.number - b.number);
+    if (!players.length) return null;
+
+    const data: WCSquad = { players };
+    squadCache.set(idTeam, { at: Date.now(), data });
+    return data;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
 }

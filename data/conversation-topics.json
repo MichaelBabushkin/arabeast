@@ -75,9 +75,9 @@
     "title": "World Cup",
     "titleArabic": "كأس العالم",
     "icon": "⚽",
-    "description": "Mundial Edition! Football vocabulary — goals, teams, the trophy, and the roar of the crowd.",
+    "description": "World Cup special! Football vocabulary — goals, teams, the trophy, and the roar of the crowd.",
     "color": "#22c55e",
-    "edition": "mundial",
+    "edition": "world-cup",
     "vocabulary": [
       { "arabic": "كرة القدم", "transliteration": "kurat al-qadam", "english": "Football" },
       { "arabic": "هدف", "transliteration": "hadaf", "english": "Goal" },

@@ -155,7 +155,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── Mundial Edition banner ── */}
+        {/* ── World Cup banner ── */}
         <Link
           href="/play/worldcup"
           className="group relative overflow-hidden rounded-3xl p-5 flex items-center gap-4 transition hover:scale-[1.01]"
@@ -171,11 +171,11 @@ export default function HomePage() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-black px-2 py-0.5 rounded-full text-green-950" style={{ background: "#fde047" }}>
-                ⚽ MUNDIAL EDITION
+                ⚽ WORLD CUP
               </span>
               <span className="text-[10px] font-semibold text-amber-300/50">Limited time</span>
             </div>
-            <h2 className="text-lg font-black text-amber-50 mt-1">Collect the Mundial Album</h2>
+            <h2 className="text-lg font-black text-amber-50 mt-1">Collect the World Cup Album</h2>
             <p className="text-sm text-amber-200/60 leading-snug">
               Earn a card for every team and real match — in Arabic. Learn the flags, predict results, read scores in <span style={{ fontFamily: "var(--font-noto-naskh), serif" }}>٠–٩</span>.
             </p>
@@ -304,11 +304,11 @@ export default function HomePage() {
                   🏆
                 </div>
                 <span className="text-xs font-black px-2.5 py-0.5 rounded-full text-green-950" style={{ background: "#fde047" }}>
-                  ⚽ MUNDIAL
+                  ⚽ WORLD CUP
                 </span>
               </div>
               <div>
-                <h2 className="text-lg font-bold text-amber-50">Mundial Album</h2>
+                <h2 className="text-lg font-bold text-amber-50">World Cup Album</h2>
                 <p className="text-sm text-amber-200/55 mt-0.5 leading-snug">
                   Collect team & match cards from the real World Cup. Learn flags, predict results, read scores in Arabic.
                 </p>

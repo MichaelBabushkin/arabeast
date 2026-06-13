@@ -429,7 +429,7 @@ export default function ConversationPage() {
                   </p>
                 </div>
               </button>
-              {/* Faris — Mundial Edition */}
+              {/* Faris — World Cup */}
               <button
                 type="button"
                 onClick={() => handleSelectCharacter("faris")}
@@ -443,7 +443,7 @@ export default function ConversationPage() {
                   className="absolute top-3 right-3 text-[10px] font-black px-2 py-0.5 rounded-full text-green-950"
                   style={{ background: "#fde047" }}
                 >
-                  ⚽ MUNDIAL
+                  ⚽ WORLD CUP
                 </span>
                 <div className="flex items-center gap-3">
                   <div className="flex-shrink-0 w-[100px] aspect-[260/390]">
