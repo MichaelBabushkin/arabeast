@@ -24,23 +24,26 @@ import {
   type WCSquad,
 } from "@/lib/worldcup";
 
-/** Emoji flag when we have one, otherwise the FIFA tricode as a badge. */
+/** Team flag fetched from the FIFA API. */
 function Flag({ t, className }: { t: WCTeam; className?: string }) {
-  if (t.flag) return <span className={className}>{t.flag}</span>;
   return (
-    <span
-      className={`inline-flex items-center justify-center rounded bg-white/10 px-1.5 font-black tracking-tight text-amber-200/80 ${className ?? ""}`}
-      style={{ fontSize: "0.5em", lineHeight: 1.6 }}
-    >
-      {t.abbr}
-    </span>
+    <img
+      src={`https://api.fifa.com/api/v3/picture/flags-sq-4/${t.code}`}
+      alt={`${t.english} flag`}
+      className={`inline-block object-cover rounded shadow-sm select-none flex-shrink-0 ${className ?? ""}`}
+      style={{
+        width: "1em",
+        height: "1em",
+        verticalAlign: "middle",
+      }}
+    />
   );
 }
 
 const NAF = "var(--font-noto-naskh), serif";
 
 type Modal =
-  | { kind: "team"; team: WCTeam; group: string | null }
+  | { kind: "team"; team: WCTeam; group: string | null; flagOptions: WCTeam[] }
   | { kind: "match"; match: WCMatch }
   | null;
 
@@ -92,9 +95,12 @@ export default function AlbumPage() {
 
   const openTeam = useCallback(
     (team: WCTeam) => {
-      setModal({ kind: "team", team, group: groupByTeam.get(team.code) ?? null });
+      const others = (data?.teams ?? []).filter((t) => t.code !== team.code);
+      const distractors = [...others].sort(() => Math.random() - 0.5).slice(0, 3);
+      const flagOptions = [team, ...distractors].sort(() => Math.random() - 0.5);
+      setModal({ kind: "team", team, group: groupByTeam.get(team.code) ?? null, flagOptions });
     },
-    [groupByTeam],
+    [data, groupByTeam],
   );
 
   const onTeamCorrect = useCallback(
@@ -257,21 +263,11 @@ export default function AlbumPage() {
                     {got ? (
                       <>
                         {/* flag fills the card */}
-                        {t.flag ? (
-                          <span
-                            className="pointer-events-none absolute inset-0 flex items-center justify-center select-none"
-                            style={{ fontSize: "5rem", transform: "scale(1.55)" }}
-                          >
-                            {t.flag}
-                          </span>
-                        ) : (
-                          <span
-                            className="pointer-events-none absolute inset-0 flex items-center justify-center text-3xl font-black text-white/25"
-                            style={{ background: "linear-gradient(135deg,#1f7a42,#14532d)" }}
-                          >
-                            {t.abbr}
-                          </span>
-                        )}
+                        <img
+                          src={`https://api.fifa.com/api/v3/picture/flags-sq-4/${t.code}`}
+                          alt={`${t.english} flag`}
+                          className="pointer-events-none absolute inset-0 h-full w-full object-cover select-none"
+                        />
                         {/* legibility scrim */}
                         <div
                           className="pointer-events-none absolute inset-0"
@@ -335,6 +331,7 @@ export default function AlbumPage() {
         <TeamProfileModal
           team={modal.team}
           group={modal.group}
+          flagOptions={modal.flagOptions}
           collected={!!album.teams[modal.team.code]}
           voice={settings.arabicVoice}
           onCollect={() => onTeamCorrect(modal.team)}
@@ -428,6 +425,7 @@ function MatchCard({
 function TeamProfileModal({
   team,
   group,
+  flagOptions,
   collected,
   voice,
   onCollect,
@@ -435,6 +433,7 @@ function TeamProfileModal({
 }: {
   team: WCTeam;
   group: string | null;
+  flagOptions: WCTeam[];
   collected: boolean;
   voice: string;
   onCollect: () => void;
@@ -442,8 +441,7 @@ function TeamProfileModal({
 }) {
   const [squad, setSquad] = useState<WCSquad | null>(null);
   const [loading, setLoading] = useState(true);
-  const [target, setTarget] = useState<WCPlayer | null>(null);
-  const [picked, setPicked] = useState<number | null>(null);
+  const [wrongPick, setWrongPick] = useState<string | null>(null);
 
   const say = (t: string) => speakJinn(t, voice as never);
 
@@ -452,11 +450,7 @@ function TeamProfileModal({
     let active = true;
     fetch(`/api/worldcup/team/${team.idTeam}`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((s: WCSquad) => {
-        if (!active) return;
-        setSquad(s);
-        if (s.players.length) setTarget(s.players[Math.floor(Math.random() * s.players.length)]);
-      })
+      .then((s: WCSquad) => { if (active) setSquad(s); })
       .catch(() => { })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
@@ -468,20 +462,26 @@ function TeamProfileModal({
     return g;
   }, [squad]);
 
-  const choosePos = (i: number) => {
-    if (picked != null || !target) return;
-    setPicked(i);
-    if (i === target.position) onCollect();
+  const pickFlag = (opt: WCTeam) => {
+    if (opt.code === team.code) onCollect();
+    else setWrongPick(opt.code);
   };
-
-  const revealSquad = collected || picked != null;
 
   return (
     <Overlay onClose={onClose} size="2xl">
       <div className="flex flex-col gap-4 max-h-[92vh]">
         {/* ── header ── */}
         <div className="flex items-center gap-3">
-          <Flag t={team} className="text-7xl" />
+          {collected ? (
+            <Flag t={team} className="text-7xl" />
+          ) : (
+            <span
+              className="flex h-[72px] w-[72px] flex-shrink-0 items-center justify-center rounded-2xl text-4xl text-amber-300/40"
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px dashed rgba(255,255,255,0.18)" }}
+            >
+              ؟
+            </span>
+          )}
           <div className="flex-1 min-w-0">
             <button type="button" onClick={() => say(team.arabic)} className="flex items-center gap-2 group">
               <span className="text-4xl font-black text-amber-50" style={{ fontFamily: NAF, direction: "rtl" }}>{team.arabic}</span>
@@ -508,89 +508,55 @@ function TeamProfileModal({
           </div>
         </div>
 
-        {loading && <p className="text-sm text-amber-300/50 text-center py-4">Loading squad…</p>}
-
-        {/* ── no squad (offline / curated) ── */}
-        {!loading && !squad && (
-          <div className="text-center flex flex-col items-center gap-3 py-2">
-            <p className="text-sm text-amber-200/60">Squad list is unavailable right now.</p>
-            {!collected && (
-              <button type="button" onClick={onCollect} className="rounded-2xl px-5 py-2.5 text-sm font-bold text-green-950" style={{ background: "#fde047" }}>
-                Add to album · +5 XP
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* ── collect gate: name a player's position ── */}
-        {!collected && squad && target && (
-          <div className="rounded-2xl p-4 flex flex-col gap-3" style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.3)" }}>
-            <p className="text-base text-amber-200/75 text-center">
-              Collect this team — <span className="font-bold">ما مركزه؟</span> what position does he play?
+        {/* ── before collected: pick the country's flag ── */}
+        {!collected && (
+          <div className="rounded-2xl p-5 flex flex-col gap-4" style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.3)" }}>
+            <p className="text-lg text-amber-100 text-center">
+              Collect this team — which flag is{" "}
+              <span className="font-black" style={{ fontFamily: NAF }}>{team.arabic}</span>{" "}
+              <span className="text-amber-300/60">({team.english})</span>?
             </p>
-            <button type="button" onClick={() => say(target.name)} className="flex items-center justify-center gap-2.5 group">
-              {target.photo ? (
-                <span className="relative">
-                  <span className="block h-16 w-16 overflow-hidden rounded-full border-2 border-white/40" style={{ background: "rgba(255,255,255,0.12)" }}>
-                    <Image
-                      src={target.photo}
-                      alt=""
-                      width={320}
-                      height={420}
-                      quality={90}
-                      sizes="90px"
-                      className="h-full w-full object-cover"
-                      style={{ objectPosition: "center top", transform: "scale(2.6)", transformOrigin: "center top" }}
-                    />
-                  </span>
-                  <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[11px] font-black text-white border border-white/50">{target.number}</span>
-                </span>
-              ) : (
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-sm font-bold text-amber-200">{target.number}</span>
-              )}
-              <span className="text-3xl font-black text-amber-50" style={{ fontFamily: NAF, direction: "rtl" }}>{target.name}</span>
-              <Volume2 className="h-5 w-5 text-amber-300/40 group-hover:text-amber-200" />
-            </button>
-            <div className="grid grid-cols-2 gap-2">
-              {POSITION_AR.map((pos, i) => {
-                const isTarget = target.position === i;
-                const isPicked = picked === i;
-                const show = picked != null;
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {flagOptions.map((opt) => {
+                const wrong = wrongPick === opt.code;
                 return (
                   <button
-                    key={pos}
+                    key={opt.code}
                     type="button"
-                    onClick={() => choosePos(i)}
-                    disabled={show}
-                    className="rounded-xl px-2 py-3 text-center transition"
+                    onClick={() => pickFlag(opt)}
+                    className="flex items-center justify-center rounded-2xl py-6 transition hover:scale-105"
                     style={{
-                      background: show && isTarget ? "rgba(34,197,94,0.2)" : isPicked ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.05)",
-                      border: show && isTarget ? "1px solid rgba(34,197,94,0.6)" : isPicked ? "1px solid rgba(239,68,68,0.5)" : "1px solid rgba(255,255,255,0.12)",
+                      background: wrong ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.05)",
+                      border: wrong ? "1px solid rgba(239,68,68,0.5)" : "1px solid rgba(255,255,255,0.12)",
                     }}
                   >
-                    <span className="block text-2xl font-bold text-amber-100" style={{ fontFamily: NAF, direction: "rtl" }}>{pos}</span>
-                    <span className="block text-sm text-amber-300/45">{POSITION_EN[i]}</span>
+                    <Flag t={opt} className="text-7xl" />
                   </button>
                 );
               })}
             </div>
-            {picked != null && picked !== target.position && (
+            {wrongPick && (
               <p className="flex items-center justify-center gap-1 text-sm text-red-300/80">
-                <X className="h-4 w-4" /> It&apos;s {POSITION_EN[target.position]} — see the squad below, then retry.
+                <X className="h-4 w-4" /> Not that one — try again!
               </p>
             )}
           </div>
         )}
 
-        {/* ── squad on the pitch (tap a shirt to hear the name) ── */}
-        {squad && revealSquad && (
-          <div className="overflow-y-auto pr-1">
-            <p className="text-base text-amber-300/55 mb-3 text-center">
-              Tap a shirt to hear the name · positions shown in Arabic
-            </p>
-            <Pitch grouped={grouped} onTap={say} />
-          </div>
-        )}
+        {/* ── after collected: squad on the pitch (tap a shirt to hear the name) ── */}
+        {collected &&
+          (loading ? (
+            <p className="text-sm text-amber-300/50 text-center py-4">Loading squad…</p>
+          ) : squad ? (
+            <div className="overflow-y-auto pr-1">
+              <p className="text-base text-amber-300/55 mb-3 text-center">
+                Tap a shirt to hear the name · positions shown in Arabic
+              </p>
+              <Pitch grouped={grouped} onTap={say} />
+            </div>
+          ) : (
+            <p className="text-sm text-amber-200/60 text-center py-4">Squad list is unavailable right now.</p>
+          ))}
       </div>
     </Overlay>
   );
