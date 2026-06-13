@@ -157,7 +157,7 @@ export default function HomePage() {
 
         {/* ── Mundial Edition banner ── */}
         <Link
-          href="/play/conversation"
+          href="/play/worldcup"
           className="group relative overflow-hidden rounded-3xl p-5 flex items-center gap-4 transition hover:scale-[1.01]"
           style={{
             background: "linear-gradient(110deg, rgba(34,197,94,0.22) 0%, rgba(21,128,61,0.12) 45%, rgba(253,224,71,0.14) 100%)",
@@ -175,9 +175,9 @@ export default function HomePage() {
               </span>
               <span className="text-[10px] font-semibold text-amber-300/50">Limited time</span>
             </div>
-            <h2 className="text-lg font-black text-amber-50 mt-1">World Cup Special is here</h2>
+            <h2 className="text-lg font-black text-amber-50 mt-1">Collect the Mundial Album</h2>
             <p className="text-sm text-amber-200/60 leading-snug">
-              Meet <span className="font-bold text-green-300">Faris</span>, the World Cup captain, and train your football Arabic — كرة القدم, هدف, كأس.
+              Earn a card for every team and real match — in Arabic. Learn the flags, predict results, read scores in <span style={{ fontFamily: "var(--font-noto-naskh), serif" }}>٠–٩</span>.
             </p>
           </div>
           <ChevronRight className="hidden sm:block h-5 w-5 text-amber-300/50 group-hover:translate-x-0.5 transition-transform flex-shrink-0" />
@@ -284,6 +284,37 @@ export default function HomePage() {
               </div>
               <div className="flex items-center gap-1.5 text-xs text-emerald-400/60 font-medium">
                 <span>4 topics · incl. ⚽ World Cup</span>
+                <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </Link>
+
+            <Link
+              href="/play/worldcup"
+              className="group relative flex flex-col gap-3 rounded-3xl p-5 transition hover:scale-[1.02]"
+              style={{
+                background: "linear-gradient(135deg, rgba(34,197,94,0.16) 0%, rgba(21,128,61,0.10) 100%)",
+                border: "1px solid rgba(34,197,94,0.3)",
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-xl text-xl"
+                  style={{ background: "rgba(34,197,94,0.2)", border: "1px solid rgba(34,197,94,0.25)" }}
+                >
+                  🏆
+                </div>
+                <span className="text-xs font-black px-2.5 py-0.5 rounded-full text-green-950" style={{ background: "#fde047" }}>
+                  ⚽ MUNDIAL
+                </span>
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-amber-50">Mundial Album</h2>
+                <p className="text-sm text-amber-200/55 mt-0.5 leading-snug">
+                  Collect team & match cards from the real World Cup. Learn flags, predict results, read scores in Arabic.
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-green-400/60 font-medium">
+                <span>Live · limited-time event</span>
                 <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
               </div>
             </Link>
