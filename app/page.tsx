@@ -10,6 +10,7 @@ import SettingsModal from "@/components/SettingsModal";
 import { speakJinn } from "@/lib/speech";
 import { BookOpen, MessageCircle, Settings, Swords, UserCircle2, ChevronRight, LogOut, Volume2 } from "lucide-react";
 import { CHAPTERS } from "@/lib/chapters";
+import { WC_LOGO_URL, HAS_WC_LOGO } from "@/lib/worldcupBranding";
 
 const SHOWCASE_WORDS = [
   { arabic: "مرحبا",   transliteration: "marhaba",  english: "Hello" },
@@ -76,7 +77,7 @@ export default function HomePage() {
         ))}
       </div>
 
-      <div className="relative mx-auto w-full max-w-4xl flex flex-col gap-12 px-5 py-8">
+      <div className="relative w-full flex flex-col gap-12 px-4 sm:px-8 lg:px-16 py-8">
 
         {/* ── top nav ── */}
         <nav className="flex items-center justify-between">
@@ -158,29 +159,39 @@ export default function HomePage() {
         {/* ── World Cup banner ── */}
         <Link
           href="/play/worldcup"
-          className="group relative overflow-hidden rounded-3xl p-5 flex items-center gap-4 transition hover:scale-[1.01]"
+          className="group relative overflow-hidden rounded-3xl p-5 sm:p-6 flex items-center gap-5 transition hover:scale-[1.01]"
           style={{
-            background: "linear-gradient(110deg, rgba(34,197,94,0.22) 0%, rgba(21,128,61,0.12) 45%, rgba(253,224,71,0.14) 100%)",
-            border: "1px solid rgba(253,224,71,0.4)",
+            background: "linear-gradient(115deg, #06210f 0%, #0f3d22 45%, #14532d 75%, #1c5a2e 100%)",
+            border: "1px solid rgba(253,224,71,0.45)",
           }}
         >
-          {/* pitch stripes */}
-          <div className="pointer-events-none absolute inset-0 opacity-[0.06]" aria-hidden
-            style={{ background: "repeating-linear-gradient(90deg, #fff 0 18px, transparent 18px 36px)" }} />
-          <span className="text-4xl flex-shrink-0 drop-shadow">🏆</span>
-          <div className="flex-1 min-w-0">
+          {/* pitch mowing stripes */}
+          <div className="pointer-events-none absolute inset-0 opacity-[0.07]" aria-hidden
+            style={{ background: "repeating-linear-gradient(90deg, #fff 0 22px, transparent 22px 44px)" }} />
+          {/* stadium-light glow */}
+          <div className="pointer-events-none absolute -top-16 -right-10 h-48 w-48 rounded-full" aria-hidden
+            style={{ background: "radial-gradient(circle, rgba(253,224,71,0.25) 0%, transparent 70%)" }} />
+          {/* faint football watermark */}
+          <span className="pointer-events-none absolute -bottom-10 right-8 text-[120px] opacity-[0.06] select-none" aria-hidden>⚽</span>
+
+          {HAS_WC_LOGO ? (
+            <img src={WC_LOGO_URL} alt="FIFA World Cup 2026" className="relative h-16 sm:h-20 w-auto object-contain flex-shrink-0 drop-shadow-lg" />
+          ) : (
+            <span className="relative text-4xl flex-shrink-0 drop-shadow">🏆</span>
+          )}
+          <div className="relative flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-black px-2 py-0.5 rounded-full text-green-950" style={{ background: "#fde047" }}>
                 ⚽ WORLD CUP
               </span>
-              <span className="text-[10px] font-semibold text-amber-300/50">Limited time</span>
+              <span className="text-[10px] font-semibold text-yellow-200/60">Limited time</span>
             </div>
-            <h2 className="text-lg font-black text-amber-50 mt-1">Collect the World Cup Album</h2>
-            <p className="text-sm text-amber-200/60 leading-snug">
+            <h2 className="text-lg sm:text-xl font-black text-white mt-1">Collect the World Cup Album</h2>
+            <p className="text-sm text-green-100/70 leading-snug">
               Earn a card for every team and real match — in Arabic. Learn the flags, predict results, read scores in <span style={{ fontFamily: "var(--font-noto-naskh), serif" }}>٠–٩</span>.
             </p>
           </div>
-          <ChevronRight className="hidden sm:block h-5 w-5 text-amber-300/50 group-hover:translate-x-0.5 transition-transform flex-shrink-0" />
+          <ChevronRight className="hidden sm:block h-5 w-5 text-yellow-200/50 group-hover:translate-x-0.5 transition-transform flex-shrink-0" />
         </Link>
 
         {/* ── word showcase ── */}
