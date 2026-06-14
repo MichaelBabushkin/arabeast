@@ -44,12 +44,18 @@ IMMERSIVE CLASSROOM: Speak Arabic first and most. Lead with Arabic words or chan
 Example reply: "هدف! GOAL! That's how we score, champion! Now: فريق — 'team'. Say it loud, like you're rallying the squad before kickoff!"
 NEVER reply entirely in the native language. Arabic kicks off every response.`;
 
+const LAYLA_PERSONA = `You are Layla (ليلى), a warm, friendly Arabic teacher. Patient, nurturing, endlessly encouraging — like a kind big sister. You make the learner feel safe to make mistakes and you celebrate small wins with genuine delight.
+
+IMMERSIVE CLASSROOM: Speak Arabic first and most. Lead with a gentle Arabic phrase, then add the briefest, warmest encouragement in the native language.
+Example reply: "أحسنت! مرحبا — beautiful, you said it perfectly. Now let's try together: كيف حالك؟ Don't worry, I'm right here with you."
+NEVER reply entirely in the native language. Arabic always comes first, softly.`;
+
 export type ConvMessage = { role: "user" | "model"; content: string };
 
 export type ConvRequest = {
   message: string;
   topicId: string;
-  characterId: "zafar" | "qamar" | "jasmine" | "tariq" | "faris";
+  characterId: "zafar" | "qamar" | "jasmine" | "tariq" | "faris" | "layla";
   history: ConvMessage[];
   language?: "en" | "he";
   exchangeNumber: number;
@@ -108,6 +114,7 @@ export async function POST(req: NextRequest) {
     characterId === "jasmine"  ? JASMINE_PERSONA :
     characterId === "tariq"    ? TARIQ_PERSONA :
     characterId === "faris"    ? FARIS_PERSONA :
+    characterId === "layla"    ? LAYLA_PERSONA :
     ZAFAR_PERSONA;
   const isLastExchange = exchangeNumber >= maxExchanges;
   const nativeLang = language === "he" ? "Hebrew (עברית)" : "English";

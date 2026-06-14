@@ -8,12 +8,13 @@ import QamarCharacter from "@/components/qamar/QamarCharacter";
 import JasmineCharacter from "@/components/jasmine/JasmineCharacter";
 import TariqCharacter from "@/components/tariq/TariqCharacter";
 import FarisCharacter from "@/components/faris/FarisCharacter";
+import LaylaCharacter from "@/components/layla/LaylaCharacter";
 import MicInput from "@/components/MicInput";
 import { speakJinn } from "@/lib/speech";
 import { JINN_VOICES, DEFAULT_VOICE, type JinnVoice } from "@/lib/tts";
 import { useSettings } from "@/lib/useSettings";
 
-type CharacterId = "zafar" | "qamar" | "jasmine" | "tariq" | "faris";
+type CharacterId = "zafar" | "qamar" | "jasmine" | "tariq" | "faris" | "layla";
 
 const CHARACTER_GREETING: Record<CharacterId, string> = {
   zafar:   "أهلاً وسهلاً بك يا صديقي!",
@@ -21,6 +22,7 @@ const CHARACTER_GREETING: Record<CharacterId, string> = {
   jasmine: "أهلاً بك، يا طالب العلم!",
   tariq:   "تعال! النجوم تنتظرنا.",
   faris:   "هيا بنا يا بطل!",
+  layla:   "مرحباً يا عزيزي! أنا سعيدة بلقائك.",
 };
 import type { ConvResponse, ConvMessage } from "@/app/api/conversation/route";
 
@@ -140,6 +142,7 @@ export default function ConversationPage() {
       jasmine: selectedTopic.openerJasmine,
       tariq:   selectedTopic.openerTariq,
       faris:   selectedTopic.openerFaris,
+      layla:   selectedTopic.openerJasmine, // TODO: give Layla her own openers
     };
     const openerText = openerMap[character];
     setOpener(openerText);
@@ -215,6 +218,8 @@ export default function ConversationPage() {
               ? "النجوم محجوبة الآن. The stars are hidden — try again in a moment."
               : selectedCharacter === "faris"
               ? "توقف اللعب! The match is paused — connection trouble. Get back on the pitch and try again!"
+              : selectedCharacter === "layla"
+              ? "لحظة من فضلك… انقطع الاتصال قليلاً. One moment — the connection slipped. Please try again."
               : "المصباح يرتجف… The lamp flickers. Please try again in a moment.",
           arabic: "",
           transliteration: "",
@@ -458,6 +463,29 @@ export default function ConversationPage() {
                   </div>
                 </div>
               </button>
+              {/* Layla */}
+              <button
+                type="button"
+                onClick={() => handleSelectCharacter("layla")}
+                className="flex flex-col gap-2 rounded-3xl p-4 text-left transition hover:scale-[1.02] col-span-2"
+                style={{
+                  background: "linear-gradient(135deg, rgba(192,132,252,0.16) 0%, rgba(120,40,160,0.10) 100%)",
+                  border: "1px solid rgba(192,132,252,0.35)",
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0 w-[100px] aspect-[260/390]">
+                    <LaylaCharacter state="idle" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-amber-50">Layla</p>
+                    <p className="text-xs text-fuchsia-400/70 mb-1">Friendly Guide</p>
+                    <p className="text-xs text-amber-200/55">
+                      Warm and patient. Speaks gently and cheers you on every step.
+                    </p>
+                  </div>
+                </div>
+              </button>
             </div>
           </div>
         )}
@@ -477,6 +505,8 @@ export default function ConversationPage() {
                   <TariqCharacter state={characterState} />
                 ) : selectedCharacter === "faris" ? (
                   <FarisCharacter state={characterState} />
+                ) : selectedCharacter === "layla" ? (
+                  <LaylaCharacter state={characterState} />
                 ) : (
                   <JinnCharacter state={characterState} />
                 )}
