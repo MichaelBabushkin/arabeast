@@ -115,14 +115,35 @@ export default function WorldCupHub() {
 
           <ChapterCard
             n={3}
-            title="The Mundial Album"
-            titleArabic="ألبوم المونديال"
+            title="The World Cup Album"
+            titleArabic="ألبوم كأس العالم"
             desc="Collect a card for every team and real match of the 2026 World Cup — live from FIFA."
             href={basicsDone ? "/play/worldcup/album" : undefined}
             color="#fde047"
             status={basicsDone ? "open" : "locked"}
             footer={basicsDone ? "Live · official FIFA data" : "Unlocks after The Basics"}
           />
+        </div>
+
+        {/* bonus games */}
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-amber-400/50 mb-3">Bonus</p>
+          <Link
+            href="/play/worldcup/players"
+            className="group flex items-center gap-4 rounded-3xl p-5 transition hover:scale-[1.01]"
+            style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.14) 0%, rgba(0,0,0,0) 100%)", border: "1px solid rgba(34,197,94,0.3)" }}
+          >
+            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl text-2xl" style={{ background: "rgba(34,197,94,0.2)" }}>⚽</div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-baseline gap-2">
+                <h2 className="font-bold text-amber-50">Guess the Player</h2>
+                <span className="text-sm text-amber-300/50" style={{ fontFamily: "var(--font-noto-naskh), serif" }}>خمّن اللاعب</span>
+              </div>
+              <p className="text-sm text-amber-200/55 mt-0.5 leading-snug">Pick a nation, then a photo quiz over its real squad — names &amp; positions in Arabic.</p>
+              <p className="text-[11px] font-semibold mt-1.5 text-green-400/70">Live · official FIFA squads</p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-amber-300/40 flex-shrink-0" />
+          </Link>
         </div>
       </div>
     </main>
