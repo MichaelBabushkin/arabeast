@@ -329,6 +329,37 @@ export default function HomePage() {
                 <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
               </div>
             </Link>
+
+            <Link
+              href="/play/news"
+              className="group relative flex flex-col gap-3 rounded-3xl p-5 transition hover:scale-[1.02]"
+              style={{
+                background: "linear-gradient(135deg, rgba(56,130,246,0.16) 0%, rgba(20,50,90,0.10) 100%)",
+                border: "1px solid rgba(125,185,255,0.3)",
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-xl text-xl"
+                  style={{ background: "rgba(125,185,255,0.15)", border: "1px solid rgba(125,185,255,0.25)" }}
+                >
+                  📰
+                </div>
+                <span className="text-xs font-black px-2.5 py-0.5 rounded-full text-sky-950" style={{ background: "#7dd3fc" }}>
+                  NEWS
+                </span>
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-amber-50">Arabic News</h2>
+                <p className="text-sm text-amber-200/55 mt-0.5 leading-snug">
+                  Read real Modern Standard Arabic headlines — hear them read aloud, translate, and learn the key words.
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-sky-300/60 font-medium">
+                <span>Live · updated through the day</span>
+                <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </Link>
           </div>
         </section>
 

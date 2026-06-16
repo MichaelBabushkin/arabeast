@@ -61,6 +61,27 @@ export default function SettingsModal({ onClose }: Props) {
           </div>
         </div>
 
+        {/* Arabic help (UI label glosses) */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-col gap-2 flex-1">
+            <SectionLabel title="Arabic Help" desc="Show small English labels next to Arabic text in the app's interface." />
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={settings.showArabicHelp}
+            onClick={() => update({ showArabicHelp: !settings.showArabicHelp })}
+            className="relative mt-0.5 h-6 w-11 flex-shrink-0 rounded-full transition"
+            style={{ background: settings.showArabicHelp ? "#d4a017" : "rgba(255,255,255,0.15)" }}
+            aria-label="Toggle Arabic help"
+          >
+            <span
+              className="absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all"
+              style={{ left: settings.showArabicHelp ? "22px" : "2px" }}
+            />
+          </button>
+        </div>
+
         {/* Arabic Voice */}
         <div className="flex flex-col gap-2">
           <SectionLabel title="Arabic Voice" desc="Click any voice to preview and select it." />

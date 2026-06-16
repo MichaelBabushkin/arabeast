@@ -15,6 +15,7 @@ export type Settings = {
   hebrewVoice:  HebrewVoice;
   englishVoice: EnglishVoice;
   language:     "en" | "he";
+  showArabicHelp: boolean; // show small English glosses next to Arabic UI labels
 };
 
 const DEFAULTS: Settings = {
@@ -22,6 +23,7 @@ const DEFAULTS: Settings = {
   hebrewVoice:  DEFAULT_HEBREW_VOICE,
   englishVoice: DEFAULT_ENGLISH_VOICE,
   language:     "en",
+  showArabicHelp: true,
 };
 
 const KEY = "arabeast-settings";
