@@ -1,13 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
-import { ArrowLeft, Volume2, Sparkles, ExternalLink, X, Newspaper, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Volume2, Sparkles, ExternalLink, X, Newspaper, ChevronLeft, ChevronRight, HelpCircle, Check } from "lucide-react";
 import { speakJinn } from "@/lib/speech";
 import { useSettings } from "@/lib/useSettings";
 import ArabicGloss from "@/components/ArabicGloss";
 import type { NewsItem } from "@/lib/news";
 import type { NewsAssist } from "@/app/api/news/assist/route";
+import type { WordGloss } from "@/app/api/news/word/route";
+import type { NewsQuiz } from "@/app/api/news/quiz/route";
 
 const NAF = "var(--font-noto-naskh), serif";
 
@@ -21,6 +23,32 @@ function timeAgo(iso: string): string {
 }
 
 const PAGE_SIZE = 12;
+
+// keep only Arabic letters for the lookup (strip punctuation/diacritics edges)
+const arabicOnly = (w: string) => w.replace(/[^ء-ي]/g, "");
+
+/** Arabic text whose words are individually tappable (for tap-to-translate). */
+function TappableArabic({ text, onWord, className, style }: { text: string; onWord: (w: string) => void; className?: string; style?: CSSProperties }) {
+  const parts = text.split(/(\s+)/);
+  return (
+    <span className={className} dir="rtl" style={style}>
+      {parts.map((p, i) => {
+        if (/^\s+$/.test(p)) return <span key={i}>{p}</span>;
+        const word = arabicOnly(p);
+        if (!word) return <span key={i}>{p}</span>;
+        return (
+          <span
+            key={i}
+            onClick={(e) => { e.stopPropagation(); onWord(word); }}
+            className="cursor-pointer rounded px-0.5 transition hover:bg-sky-400/25 hover:text-white"
+          >
+            {p}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
 
 export default function NewsPage() {
   const { settings, update } = useSettings();
@@ -304,6 +332,19 @@ function Reader({
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
 
+  // tap-a-word translation
+  const wordCache = useRef<Map<string, WordGloss>>(new Map());
+  const [tapped, setTapped] = useState<{ word: string; translit?: string; meaning?: string; loading: boolean; failed?: boolean } | null>(null);
+
+  // comprehension question
+  const [quiz, setQuiz] = useState<NewsQuiz | null>(null);
+  const [quizLoading, setQuizLoading] = useState(false);
+  const [quizFailed, setQuizFailed] = useState(false);
+  const [quizPicked, setQuizPicked] = useState<number | null>(null);
+
+  const fullText = `${item.title}\n\n${item.summary}`.trim();
+  const enLang = language === "he" ? "Hebrew" : "English";
+
   const explain = async () => {
     setLoading(true);
     setFailed(false);
@@ -311,7 +352,7 @@ function Reader({
       const res = await fetch("/api/news/assist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: `${item.title}\n\n${item.summary}`.trim(), language }),
+        body: JSON.stringify({ text: fullText, language }),
       });
       if (!res.ok) throw new Error();
       setAssist((await res.json()) as NewsAssist);
@@ -319,6 +360,44 @@ function Reader({
       setFailed(true);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const onWord = async (word: string) => {
+    const cached = wordCache.current.get(word);
+    if (cached) { setTapped({ word, ...cached, loading: false }); return; }
+    setTapped({ word, loading: true });
+    try {
+      const res = await fetch("/api/news/word", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ word, context: fullText, language }),
+      });
+      if (!res.ok) throw new Error();
+      const g = (await res.json()) as WordGloss;
+      wordCache.current.set(word, g);
+      setTapped({ word, ...g, loading: false });
+    } catch {
+      setTapped({ word, loading: false, failed: true });
+    }
+  };
+
+  const loadQuiz = async () => {
+    setQuizLoading(true);
+    setQuizFailed(false);
+    setQuizPicked(null);
+    try {
+      const res = await fetch("/api/news/quiz", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: fullText, language }),
+      });
+      if (!res.ok) throw new Error();
+      setQuiz((await res.json()) as NewsQuiz);
+    } catch {
+      setQuizFailed(true);
+    } finally {
+      setQuizLoading(false);
     }
   };
 
@@ -344,20 +423,48 @@ function Reader({
           <img src={item.thumbnail} alt="" className="mb-4 aspect-video w-full rounded-2xl object-cover" />
         )}
 
-        {/* title + read aloud */}
+        {/* title + read aloud (tap a word to translate) */}
         <div className="flex items-start gap-2">
           <button type="button" onClick={() => say(item.title)} className="mt-1 flex-shrink-0 text-sky-300/60 hover:text-sky-200" aria-label="Read title aloud">
             <Volume2 className="h-5 w-5" />
           </button>
-          <h1 className="text-2xl font-black text-amber-50 leading-snug" style={{ fontFamily: NAF, direction: "rtl" }}>{item.title}</h1>
+          <h1 className="text-2xl font-black text-amber-50 leading-snug" dir="rtl">
+            <TappableArabic text={item.title} onWord={onWord} style={{ fontFamily: NAF }} />
+          </h1>
         </div>
+        <p className="ml-7 mt-1 text-[11px] text-sky-300/40">Tap any word for its meaning.</p>
 
         {item.summary && (
           <div className="mt-3 flex items-start gap-2">
             <button type="button" onClick={() => say(item.summary)} className="mt-1 flex-shrink-0 text-sky-300/40 hover:text-sky-200" aria-label="Read summary aloud">
               <Volume2 className="h-4 w-4" />
             </button>
-            <p className="text-lg text-amber-100/85 leading-relaxed" style={{ fontFamily: NAF, direction: "rtl" }}>{item.summary}</p>
+            <p className="text-lg text-amber-100/85 leading-relaxed" dir="rtl">
+              <TappableArabic text={item.summary} onWord={onWord} style={{ fontFamily: NAF }} />
+            </p>
+          </div>
+        )}
+
+        {/* tapped-word gloss */}
+        {tapped && (
+          <div className="mt-4 flex items-center gap-3 rounded-2xl p-3" style={{ background: "rgba(125,185,255,0.1)", border: "1px solid rgba(125,185,255,0.3)" }}>
+            <button type="button" onClick={() => say(tapped.word)} className="flex-shrink-0 text-sky-300/60 hover:text-sky-200" aria-label="Read word aloud">
+              <Volume2 className="h-4 w-4" />
+            </button>
+            <span className="text-2xl font-black text-sky-50" style={{ fontFamily: NAF, direction: "rtl" }}>{tapped.word}</span>
+            {tapped.loading ? (
+              <span className="text-sm text-sky-200/50">…</span>
+            ) : tapped.failed ? (
+              <span className="text-sm text-red-300/70">no result — tap again</span>
+            ) : (
+              <>
+                <span className="text-xs italic text-sky-200/50">{tapped.translit}</span>
+                <span className="ml-auto text-base font-semibold text-sky-100" dir={language === "he" ? "rtl" : "ltr"}>{tapped.meaning}</span>
+              </>
+            )}
+            <button type="button" onClick={() => setTapped(null)} className="flex-shrink-0 text-sky-200/40 hover:text-sky-100" aria-label="Dismiss">
+              <X className="h-4 w-4" />
+            </button>
           </div>
         )}
 
@@ -372,7 +479,18 @@ function Reader({
               style={{ background: "#7dd3fc" }}
             >
               <Sparkles className="h-4 w-4" />
-              {loading ? "Thinking…" : `Explain in ${language === "he" ? "Hebrew" : "English"}`}
+              {loading ? "Thinking…" : `Explain in ${enLang}`}
+            </button>
+          )}
+          {!quiz && (
+            <button
+              type="button"
+              onClick={loadQuiz}
+              disabled={quizLoading}
+              className="flex items-center gap-2 rounded-2xl border border-white/10 px-4 py-2.5 text-sm font-semibold text-sky-200/80 hover:bg-white/5 transition disabled:opacity-60"
+            >
+              <HelpCircle className="h-4 w-4" />
+              {quizLoading ? "Writing…" : "Check understanding"}
             </button>
           )}
           <a
@@ -384,6 +502,46 @@ function Reader({
             <ExternalLink className="h-4 w-4" /> Full article
           </a>
         </div>
+
+        {quizFailed && <p className="mt-3 text-sm text-red-300/80">Couldn&apos;t write a question right now — try again.</p>}
+
+        {/* comprehension question */}
+        {quiz && (
+          <div className="mt-5 rounded-2xl p-4" style={{ background: "rgba(125,185,255,0.06)", border: "1px solid rgba(125,185,255,0.2)" }}>
+            <div className="flex items-center gap-2 mb-3">
+              <HelpCircle className="h-4 w-4 text-sky-300/70" />
+              <p className="text-sm font-bold text-sky-100" dir={language === "he" ? "rtl" : "ltr"}>{quiz.question}</p>
+            </div>
+            <div className="flex flex-col gap-2">
+              {quiz.options.map((opt, i) => {
+                const show = quizPicked != null;
+                const isCorrect = i === quiz.answer;
+                const isPicked = quizPicked === i;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    disabled={show}
+                    onClick={() => setQuizPicked(i)}
+                    className="flex items-center justify-between gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-amber-100 transition"
+                    dir={language === "he" ? "rtl" : "ltr"}
+                    style={{
+                      background: show && isCorrect ? "rgba(34,197,94,0.18)" : isPicked ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.04)",
+                      border: show && isCorrect ? "1px solid rgba(34,197,94,0.6)" : isPicked ? "1px solid rgba(239,68,68,0.5)" : "1px solid rgba(255,255,255,0.1)",
+                    }}
+                  >
+                    <span>{opt}</span>
+                    {show && isCorrect && <Check className="h-4 w-4 flex-shrink-0 text-green-300" />}
+                    {show && isPicked && !isCorrect && <X className="h-4 w-4 flex-shrink-0 text-red-300" />}
+                  </button>
+                );
+              })}
+            </div>
+            {quizPicked != null && (
+              <p className="mt-3 text-sm text-sky-200/70" dir={language === "he" ? "rtl" : "ltr"}>{quiz.explanation}</p>
+            )}
+          </div>
+        )}
 
         {failed && <p className="mt-3 text-sm text-red-300/80">Couldn&apos;t generate help right now — try again.</p>}
 
