@@ -199,7 +199,7 @@ export default function NewsPage() {
                   onClick={() => update({ language: l })}
                   className={`px-3 py-2 transition ${settings.language === l ? "bg-sky-500/30 text-white border-b-2 border-sky-400" : "text-sky-200/50 hover:text-sky-100"}`}
                 >
-                  {l === "en" ? "ENGLISH" : "עִבְرִית"}
+                  {l === "en" ? "ENGLISH" : "עברית"}
                 </button>
               ))}
             </div>
