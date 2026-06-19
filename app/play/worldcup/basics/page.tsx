@@ -7,6 +7,7 @@ import FarisCharacter, { type FarisState } from "@/components/faris/FarisCharact
 import { speakJinn } from "@/lib/speech";
 import { useSettings } from "@/lib/useSettings";
 import { useProgress } from "@/lib/useProgress";
+import { useVocab } from "@/lib/useVocab";
 import { useWcProgress } from "@/lib/useWcProgress";
 import { BASICS, buildBasicsQuiz, formsOf, type QuizQuestion } from "@/lib/footballVocab";
 
@@ -19,6 +20,7 @@ export default function BasicsPage() {
   const { settings } = useSettings();
   const { progress, addXp } = useProgress();
   const { recordBasicsQuiz } = useWcProgress();
+  const { capture } = useVocab();
 
   const [phase, setPhase] = useState<Phase>("learn");
 
@@ -57,6 +59,7 @@ export default function BasicsPage() {
     const correct = opt === q.word.english;
     if (correct) setScore((s) => s + 1);
     say(q.prompt.arabic);
+    capture({ arabic: q.word.arabic, translit: q.word.translit, meaning: q.word.english, lang: "en", source: "basics" });
   };
 
   const next = () => {

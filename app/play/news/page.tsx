@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Volume2, Sparkles, ExternalLink, X, Newspaper, ChevronLeft, ChevronRight, HelpCircle, Check } from "lucide-react";
 import { speakJinn } from "@/lib/speech";
 import { useSettings } from "@/lib/useSettings";
+import { useVocab } from "@/lib/useVocab";
 import ArabicGloss from "@/components/ArabicGloss";
 import type { NewsItem } from "@/lib/news";
 import type { NewsAssist } from "@/app/api/news/assist/route";
@@ -199,7 +200,7 @@ export default function NewsPage() {
                   onClick={() => update({ language: l })}
                   className={`px-3 py-2 transition ${settings.language === l ? "bg-sky-500/30 text-white border-b-2 border-sky-400" : "text-sky-200/50 hover:text-sky-100"}`}
                 >
-                  {l === "en" ? "ENGLISH" : "עִבְرִית"}
+                  {l === "en" ? "ENGLISH" : "עברית"}
                 </button>
               ))}
             </div>
@@ -328,6 +329,7 @@ function Reader({
   say: (t: string) => void;
   onClose: () => void;
 }) {
+  const { capture } = useVocab();
   const [assist, setAssist] = useState<NewsAssist | null>(null);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -355,7 +357,9 @@ function Reader({
         body: JSON.stringify({ text: fullText, language }),
       });
       if (!res.ok) throw new Error();
-      setAssist((await res.json()) as NewsAssist);
+      const data = (await res.json()) as NewsAssist;
+      setAssist(data);
+      data.vocab?.forEach((v) => capture({ arabic: v.arabic, translit: v.translit, meaning: v.meaning, lang: language, source: "news" }));
     } catch {
       setFailed(true);
     } finally {
@@ -377,6 +381,7 @@ function Reader({
       const g = (await res.json()) as WordGloss;
       wordCache.current.set(word, g);
       setTapped({ word, ...g, loading: false });
+      capture({ arabic: word, translit: g.translit, meaning: g.meaning, lang: language, source: "news" });
     } catch {
       setTapped({ word, loading: false, failed: true });
     }
