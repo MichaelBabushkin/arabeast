@@ -67,6 +67,26 @@ export const userProgress = pgTable("user_progress", {
   completedChapters: text("completed_chapters").array().notNull().default([]),
 });
 
+// Personal vocabulary bank with spaced-repetition state (one row per user+word).
+export const vocab = pgTable("vocab", {
+  id:           text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId:       text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  arabic:       text("arabic").notNull(),               // normalized key
+  translit:     text("translit").notNull().default(""),
+  meaning:      text("meaning").notNull().default(""),
+  lang:         text("lang", { enum: ["en", "he"] }).notNull().default("en"),
+  source:       text("source").notNull().default("manual"),
+  starred:      integer("starred").notNull().default(0), // 0 / 1
+  level:        integer("level").notNull().default(0),
+  reps:         integer("reps").notNull().default(0),
+  lapses:       integer("lapses").notNull().default(0),
+  seenCount:    integer("seen_count").notNull().default(1),
+  firstSeen:    timestamp("first_seen").notNull().defaultNow(),
+  lastSeen:     timestamp("last_seen").notNull().defaultNow(),
+  due:          timestamp("due").notNull().defaultNow(),
+  lastReviewed: timestamp("last_reviewed"),
+}, (t) => [unique("vocab_user_word").on(t.userId, t.arabic)]);
+
 export const ttsLog = pgTable("tts_log", {
   id:        text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   chars:     integer("chars").notNull(),
