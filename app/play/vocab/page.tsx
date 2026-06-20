@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Volume2, Star, Trash2, BookMarked, Brain } from "lucide-react";
+import { ArrowLeft, Volume2, Star, Trash2, BookMarked, Brain, Mic, Square } from "lucide-react";
 import { speakJinn } from "@/lib/speech";
 import { useSettings } from "@/lib/useSettings";
+import { startRecording, type Recorder } from "@/lib/recordWav";
+import type { PronounceResult } from "@/app/api/pronounce/route";
 import {
   useVocab, dueWords, vocabStats, bucketOf, MAX_LEVEL, buildReviewQueue, nextDueLabel,
   type VocabWord, type VocabSource, type MasteryBucket, type Grade,
@@ -60,7 +62,7 @@ export default function VocabPage() {
   };
 
   if (session) {
-    return <Review queue={session} say={say} onReview={review} onDone={() => setSession(null)} />;
+    return <Review queue={session} say={say} language={settings.language} onReview={review} onDone={() => setSession(null)} />;
   }
 
   return (
@@ -217,7 +219,7 @@ function WordRow({ w, say, onStar, onRemove }: { w: VocabWord; say: (t: string) 
 }
 
 /* ── spaced-repetition review session (flashcards) ── */
-function Review({ queue, say, onReview, onDone }: { queue: VocabWord[]; say: (t: string) => void; onReview: (arabic: string, grade: Grade) => void; onDone: () => void }) {
+function Review({ queue, say, language, onReview, onDone }: { queue: VocabWord[]; say: (t: string) => void; language: "en" | "he"; onReview: (arabic: string, grade: Grade) => void; onDone: () => void }) {
   const [idx, setIdx] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [correct, setCorrect] = useState(0);
@@ -275,6 +277,8 @@ function Review({ queue, say, onReview, onDone }: { queue: VocabWord[]; say: (t:
               )}
             </div>
 
+            {revealed && <Pronounce key={w.arabic} word={w.arabic} translit={w.translit} language={language} />}
+
             {!revealed ? (
               <button type="button" onClick={() => setRevealed(true)} className="rounded-2xl px-5 py-3 text-sm font-bold text-violet-950" style={{ background: "#c4b5fd" }}>
                 Show answer
@@ -311,5 +315,81 @@ function Review({ queue, say, onReview, onDone }: { queue: VocabWord[]; say: (t:
         )}
       </div>
     </main>
+  );
+}
+
+/* ── pronunciation practice: record the word, Gemini grades it ── */
+function Pronounce({ word, translit, language }: { word: string; translit: string; language: "en" | "he" }) {
+  const [status, setStatus] = useState<"idle" | "recording" | "grading" | "done" | "error">("idle");
+  const [result, setResult] = useState<PronounceResult | null>(null);
+  const recRef = useRef<Recorder | null>(null);
+
+  const start = async () => {
+    try {
+      recRef.current = await startRecording();
+      setStatus("recording");
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  const stopAndGrade = async () => {
+    const rec = recRef.current;
+    if (!rec) return;
+    setStatus("grading");
+    try {
+      const { base64, mimeType } = await rec.stop();
+      const res = await fetch("/api/pronounce", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ word, translit, language, audio: base64, mimeType }),
+      });
+      if (!res.ok) throw new Error();
+      setResult((await res.json()) as PronounceResult);
+      setStatus("done");
+    } catch {
+      setStatus("error");
+    } finally {
+      recRef.current = null;
+    }
+  };
+
+  const reset = () => { setResult(null); setStatus("idle"); };
+  const scoreColor = (s: number) => (s >= 80 ? "#22c55e" : s >= 60 ? "#7dd3fc" : "#fbbf24");
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      {status === "idle" && (
+        <button type="button" onClick={start} className="flex items-center gap-2 rounded-2xl border border-white/12 px-4 py-2 text-sm font-semibold text-violet-200/80 hover:bg-white/5 transition">
+          <Mic className="h-4 w-4" /> Practice saying it
+        </button>
+      )}
+      {status === "recording" && (
+        <button type="button" onClick={stopAndGrade} className="flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-bold text-red-50" style={{ background: "rgba(239,68,68,0.85)", animation: "pulse 1.2s ease-in-out infinite" }}>
+          <Square className="h-3.5 w-3.5 fill-current" /> Stop &amp; grade
+        </button>
+      )}
+      {status === "grading" && <p className="text-sm text-violet-200/60">Listening…</p>}
+      {status === "error" && (
+        <button type="button" onClick={reset} className="text-sm text-red-300/80 hover:text-red-200">Couldn&apos;t grade — tap to retry</button>
+      )}
+      {status === "done" && result && (
+        <div className="flex w-full flex-col items-center gap-2 rounded-2xl p-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
+          <div className="flex items-center gap-3">
+            <span className="text-3xl font-black" style={{ color: scoreColor(result.score) }}>{result.score}<span className="text-sm text-amber-300/40">/100</span></span>
+            <div className="h-2 w-28 overflow-hidden rounded-full bg-white/10">
+              <div className="h-full rounded-full" style={{ width: `${result.score}%`, background: scoreColor(result.score) }} />
+            </div>
+          </div>
+          {result.heard && result.heard !== "—" && (
+            <p className="text-xs text-amber-300/50">heard: <span style={{ fontFamily: NAF, direction: "rtl" }}>{result.heard}</span></p>
+          )}
+          <p className="text-sm text-amber-100/80 text-center" dir={language === "he" ? "rtl" : "ltr"}>{result.feedback}</p>
+          <button type="button" onClick={reset} className="flex items-center gap-1.5 text-xs text-violet-300/60 hover:text-violet-200">
+            <Mic className="h-3.5 w-3.5" /> Try again
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
