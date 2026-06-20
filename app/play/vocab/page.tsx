@@ -22,6 +22,8 @@ const SOURCE_META: Record<VocabSource, { label: string; emoji: string }> = {
   conversation: { label: "Chat", emoji: "💬" },
   worldcup: { label: "World Cup", emoji: "⚽" },
   manual: { label: "Saved", emoji: "⭐" },
+  category: { label: "Category", emoji: "🗂️" },
+  phrase: { label: "Phrase", emoji: "💬" },
 };
 
 const BUCKET_META: Record<MasteryBucket, { label: string; color: string }> = {

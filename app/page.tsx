@@ -8,7 +8,7 @@ import { useSettings } from "@/lib/useSettings";
 import JinnCharacter from "@/components/jinn/JinnCharacter";
 import SettingsModal from "@/components/SettingsModal";
 import { speakJinn } from "@/lib/speech";
-import { BookOpen, MessageCircle, Settings, Swords, UserCircle2, ChevronRight, LogOut, Volume2 } from "lucide-react";
+import { BookOpen, Settings, UserCircle2, ChevronRight, LogOut, Volume2, LayoutGrid, MessageSquareQuote } from "lucide-react";
 import { CHAPTERS } from "@/lib/chapters";
 import { WC_LOGO_URL, HAS_WC_LOGO } from "@/lib/worldcupBranding";
 
@@ -131,7 +131,7 @@ export default function HomePage() {
               </h1>
             </div>
             <p className="text-base text-amber-200/55 leading-relaxed max-w-sm">
-              Build real vocabulary through stories, quizzes, and a talking Jinn who has waited 1,000 years for someone to speak to him.
+              Build real vocabulary through stories, real news, and a talking Jinn who has waited 1,000 years for someone to speak to him.
             </p>
             <div className="flex items-center gap-3">
               <Link
@@ -142,10 +142,10 @@ export default function HomePage() {
                 Start Learning →
               </Link>
               <Link
-                href="/play/quiz"
+                href="/play/learn"
                 className="rounded-2xl border border-white/10 px-5 py-3 text-sm font-semibold text-amber-300/70 hover:bg-white/5 transition"
               >
-                Quick Quiz
+                Learn by Topic
               </Link>
             </div>
           </div>
@@ -236,65 +236,64 @@ export default function HomePage() {
             </Link>
 
             <Link
-              href="/play/quiz"
+              href="/play/learn"
               className="group flex flex-col gap-3 rounded-3xl p-5 transition hover:scale-[1.02]"
               style={{
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.09)",
+                background: "linear-gradient(135deg, rgba(45,212,191,0.16) 0%, rgba(13,148,136,0.10) 100%)",
+                border: "1px solid rgba(45,212,191,0.3)",
               }}
             >
               <div className="flex items-center justify-between">
                 <div
                   className="flex h-10 w-10 items-center justify-center rounded-xl"
-                  style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}
+                  style={{ background: "rgba(45,212,191,0.2)", border: "1px solid rgba(45,212,191,0.25)" }}
                 >
-                  <Swords className="h-5 w-5 text-amber-300/80" />
+                  <LayoutGrid className="h-5 w-5 text-teal-400" />
                 </div>
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full text-amber-900/80"
-                  style={{ background: "rgba(212,160,23,0.55)" }}>
-                  QUIZ
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full text-teal-950" style={{ background: "#2dd4bf" }}>
+                  LEARN
                 </span>
               </div>
               <div>
-                <h2 className="text-lg font-bold text-amber-50">Quick Quiz</h2>
+                <h2 className="text-lg font-bold text-amber-50">Learn by Category</h2>
                 <p className="text-sm text-amber-200/55 mt-0.5 leading-snug">
-                  Every category, random order, 5 hearts. Race for XP — no chapter required.
+                  Pick a theme — food, travel, body, politics… — and learn the words that matter, with spaced repetition.
                 </p>
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-amber-400/60 font-medium">
-                <span>Unlimited · all categories</span>
+              <div className="flex items-center gap-1.5 text-xs text-teal-400/60 font-medium">
+                <span>39 topics · pick & learn</span>
                 <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
               </div>
             </Link>
 
             <Link
-              href="/play/conversation"
+              href="/play/howtosay"
               className="group flex flex-col gap-3 rounded-3xl p-5 transition hover:scale-[1.02]"
               style={{
-                background: "linear-gradient(135deg, rgba(5,150,105,0.16) 0%, rgba(0,60,40,0.10) 100%)",
-                border: "1px solid rgba(5,150,105,0.3)",
+                background: "linear-gradient(135deg, rgba(244,114,182,0.16) 0%, rgba(225,29,72,0.10) 100%)",
+                border: "1px solid rgba(244,114,182,0.3)",
               }}
             >
               <div className="flex items-center justify-between">
                 <div
                   className="flex h-10 w-10 items-center justify-center rounded-xl"
-                  style={{ background: "rgba(5,150,105,0.2)", border: "1px solid rgba(5,150,105,0.25)" }}
+                  style={{ background: "rgba(244,114,182,0.2)", border: "1px solid rgba(244,114,182,0.25)" }}
                 >
-                  <MessageCircle className="h-5 w-5 text-emerald-400" />
+                  <MessageSquareQuote className="h-5 w-5 text-pink-400" />
                 </div>
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full text-emerald-900"
-                  style={{ background: "rgba(52,211,153,0.8)" }}>
-                  CONVO
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full text-pink-950"
+                  style={{ background: "#f472b6" }}>
+                  PHRASE
                 </span>
               </div>
               <div>
-                <h2 className="text-lg font-bold text-amber-50">Conversation</h2>
+                <h2 className="text-lg font-bold text-amber-50">How to Say</h2>
                 <p className="text-sm text-amber-200/55 mt-0.5 leading-snug">
-                  6 guided exchanges with one of 5 teachers. Speak Arabic, get evaluated in real time.
+                  Type anything in your language and get the natural way to say it in Arabic — with transliteration and a word breakdown.
                 </p>
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-emerald-400/60 font-medium">
-                <span>4 topics · incl. ⚽ World Cup</span>
+              <div className="flex items-center gap-1.5 text-xs text-pink-400/60 font-medium">
+                <span>Say it like a native</span>
                 <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
               </div>
             </Link>

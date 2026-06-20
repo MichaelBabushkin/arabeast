@@ -2,7 +2,7 @@
 // (localStorage) and the server (/api/vocab). No "use client" — safe on both.
 
 export type VocabSource =
-  | "news" | "basics" | "advanced" | "quiz" | "conversation" | "worldcup" | "manual";
+  | "news" | "basics" | "advanced" | "quiz" | "conversation" | "worldcup" | "manual" | "category" | "phrase";
 
 export type VocabWord = {
   arabic: string;        // normalized key
