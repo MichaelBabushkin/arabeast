@@ -5,6 +5,13 @@
 //    datacenter IPs directly, e.g. Al Arabiya). Best-effort.
 // Sources are merged, de-duplicated and sorted; empty results are never cached.
 
+import { GoogleGenAI } from "@google/genai";
+import { withRetry } from "@/lib/retry";
+import {
+  dwSubjectToCat, sectionToCat, isCategory, AI_CATEGORIES,
+  type CategoryId,
+} from "@/lib/newsCategories";
+
 export type NewsItem = {
   id: string;
   title: string;
@@ -14,6 +21,7 @@ export type NewsItem = {
   sourceAr: string;
   thumbnail: string | null;
   pubDate: string; // ISO
+  category: CategoryId;
 };
 
 type Source = {
@@ -94,6 +102,7 @@ function parseRss(xml: string, src: Source): NewsItem[] {
       sourceAr: src.nameAr,
       thumbnail: upscaleThumb(attrUrl(b, "media:thumbnail", "media:content", "enclosure")),
       pubDate: parseDate(tag(b, "pubDate") || tag(b, "dc:date")),
+      category: dwSubjectToCat(clean(tag(b, "dc:subject"))) ?? "general", // DW provides subjects; BBC → general (AI fills later)
     });
   }
   return out;
@@ -148,6 +157,7 @@ async function fetchRss2Json(src: Source): Promise<NewsItem[]> {
         sourceAr: src.nameAr,
         thumbnail: upscaleThumb(it.thumbnail || null),
         pubDate: parseDate(it.pubDate),
+        category: sectionToCat(it.link!) ?? "general", // Al Arabiya section is in the URL path
       }));
   } catch {
     return [];
@@ -177,6 +187,36 @@ async function getSource(src: Source): Promise<NewsItem[]> {
   return [];
 }
 
+// AI category cache, keyed by article link (so we classify each article once).
+const catCache = new Map<string, CategoryId>();
+
+/** Classify the headlines without a free-signal category, in one batched call. */
+async function classifyGaps(items: NewsItem[]): Promise<void> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || !items.length) return;
+  const list = items.map((it, i) => `${i}. ${it.title}`).join("\n");
+  const systemInstruction = `You classify Arabic news headlines. Assign each headline EXACTLY one category id from: ${AI_CATEGORIES.join(", ")}.
+Respond ONLY with a JSON array of category-id strings, in the SAME ORDER as the headlines, one per headline.`;
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    const res = await withRetry(() =>
+      ai.models.generateContent({
+        model: "gemini-3.1-flash-lite-preview",
+        config: { systemInstruction, responseMimeType: "application/json", temperature: 0, maxOutputTokens: 40 + items.length * 6 },
+        contents: [{ role: "user" as const, parts: [{ text: list }] }],
+      }),
+    );
+    const arr = JSON.parse(res.text ?? "[]") as unknown[];
+    items.forEach((it, i) => {
+      const c = arr[i];
+      if (isCategory(c) && c !== "general") {
+        it.category = c;
+        catCache.set(it.link, c);
+      }
+    });
+  } catch { /* leave as general */ }
+}
+
 let inflight: Promise<NewsItem[]> | null = null;
 
 export async function getNews(): Promise<NewsItem[]> {
@@ -191,6 +231,17 @@ export async function getNews(): Promise<NewsItem[]> {
       merged.push(item);
     }
     merged.sort((a, b) => b.pubDate.localeCompare(a.pubDate));
+
+    // fill uncategorised items: cached AI result first, then one batched call for the rest
+    const gaps: NewsItem[] = [];
+    for (const it of merged) {
+      if (it.category !== "general") continue;
+      const cached = catCache.get(it.link);
+      if (cached) it.category = cached;
+      else gaps.push(it);
+    }
+    await classifyGaps(gaps);
+
     return merged;
   })();
   try {

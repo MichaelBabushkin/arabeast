@@ -8,6 +8,7 @@ import { useSettings } from "@/lib/useSettings";
 import { useVocab } from "@/lib/useVocab";
 import ArabicGloss from "@/components/ArabicGloss";
 import type { NewsItem } from "@/lib/news";
+import { CATEGORIES, CATEGORY_META, type CategoryId } from "@/lib/newsCategories";
 import type { NewsAssist } from "@/app/api/news/assist/route";
 import type { WordGloss } from "@/app/api/news/word/route";
 import type { NewsQuiz } from "@/app/api/news/quiz/route";
@@ -57,6 +58,7 @@ export default function NewsPage() {
   const [error, setError] = useState(false);
   const [open, setOpen] = useState<NewsItem | null>(null);
   const [source, setSource] = useState<string>("all");
+  const [category, setCategory] = useState<CategoryId | "all">("all");
   const [page, setPage] = useState(1);
 
   useEffect(() => {
@@ -79,17 +81,31 @@ export default function NewsPage() {
     return Array.from(map.values());
   }, [items]);
 
+  // categories present (with counts) — respects the active source filter
+  const categories = useMemo(() => {
+    const inSource = (items ?? []).filter((i) => source === "all" || i.source === source);
+    const counts = new Map<CategoryId, number>();
+    for (const it of inSource) counts.set(it.category, (counts.get(it.category) ?? 0) + 1);
+    return CATEGORIES.filter((c) => counts.has(c.id)).map((c) => ({ ...c, count: counts.get(c.id)! }));
+  }, [items, source]);
+
   const filtered = useMemo(
-    () => (items ?? []).filter((i) => source === "all" || i.source === source),
-    [items, source],
+    () =>
+      (items ?? []).filter(
+        (i) => (source === "all" || i.source === source) && (category === "all" || i.category === category),
+      ),
+    [items, source, category],
   );
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
   const pageItems = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
-  // reset to page 1 when the filter changes
-  useEffect(() => { setPage(1); }, [source]);
+  // reset to page 1 when a filter changes; clear category if it vanishes from the new source
+  useEffect(() => { setPage(1); }, [source, category]);
+  useEffect(() => {
+    if (category !== "all" && !categories.some((c) => c.id === category)) setCategory("all");
+  }, [categories, category]);
 
   const goPage = (p: number) => {
     setPage(p);
@@ -220,6 +236,16 @@ export default function NewsPage() {
           </div>
         )}
 
+        {/* category filter */}
+        {items && categories.length > 1 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <CategoryChip emoji="🗂️" label="All topics" active={category === "all"} onClick={() => setCategory("all")} />
+            {categories.map((c) => (
+              <CategoryChip key={c.id} emoji={c.emoji} label={c.en} ar={c.ar} count={c.count} active={category === c.id} onClick={() => setCategory(c.id)} />
+            ))}
+          </div>
+        )}
+
         {/* list */}
         {items && (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -241,6 +267,11 @@ export default function NewsPage() {
                   </div>
                   <h2 className="text-lg font-bold text-amber-50 leading-snug" style={{ fontFamily: NAF, direction: "rtl" }}>{it.title}</h2>
                   {it.summary && <p className="text-sm text-amber-200/55 leading-snug line-clamp-2" style={{ fontFamily: NAF, direction: "rtl" }}>{it.summary}</p>}
+                  {it.category !== "general" && (
+                    <span className="mt-auto inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold text-amber-200/70" style={{ background: "rgba(251,191,36,0.1)" }}>
+                      {CATEGORY_META[it.category].emoji} {CATEGORY_META[it.category].en}
+                    </span>
+                  )}
                 </div>
               </button>
             ))}
@@ -291,6 +322,22 @@ function SourceChip({ ar, en, count, active, onClick }: { ar?: string; en: strin
         <span>{en}</span>
       )}
       <span className={`text-[11px] ${active ? "text-sky-900/70" : "text-sky-200/40"}`}>{count}</span>
+    </button>
+  );
+}
+
+/* ── category filter chip ── */
+function CategoryChip({ emoji, label, ar, count, active, onClick }: { emoji: string; label: string; ar?: string; count?: number; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition ${active ? "text-amber-950" : "text-amber-200/70 hover:text-amber-100"}`}
+      style={{ background: active ? "#fcd34d" : "rgba(255,255,255,0.05)", border: active ? "1px solid #fcd34d" : "1px solid rgba(255,255,255,0.12)" }}
+    >
+      <span>{emoji}</span>
+      {ar ? <ArabicGloss ar={ar} en={label} enClassName={`text-[11px] ${active ? "text-amber-900/60" : "text-amber-200/45"}`} /> : <span>{label}</span>}
+      {count != null && <span className={`text-[11px] ${active ? "text-amber-900/70" : "text-amber-200/40"}`}>{count}</span>}
     </button>
   );
 }
