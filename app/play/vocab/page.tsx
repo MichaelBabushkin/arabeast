@@ -1,13 +1,15 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Volume2, Star, Trash2, BookMarked, Brain, RotateCcw, Check } from "lucide-react";
+import { ArrowLeft, Volume2, Star, Trash2, BookMarked, Brain, Mic, Square } from "lucide-react";
 import { speakJinn } from "@/lib/speech";
 import { useSettings } from "@/lib/useSettings";
+import { startRecording, type Recorder } from "@/lib/recordWav";
+import type { PronounceResult } from "@/app/api/pronounce/route";
 import {
-  useVocab, dueWords, vocabStats, bucketOf, MAX_LEVEL,
-  type VocabWord, type VocabSource, type MasteryBucket,
+  useVocab, dueWords, vocabStats, bucketOf, MAX_LEVEL, buildReviewQueue, nextDueLabel,
+  type VocabWord, type VocabSource, type MasteryBucket, type Grade,
 } from "@/lib/useVocab";
 
 const NAF = "var(--font-noto-naskh), serif";
@@ -33,7 +35,7 @@ type Filter = "all" | "starred" | "due" | MasteryBucket;
 
 export default function VocabPage() {
   const { settings } = useSettings();
-  const { words, loaded, toggleStar, review, remove } = useVocab();
+  const { words, loaded, newToday, toggleStar, review, remove } = useVocab();
   const say = useCallback((t: string) => speakJinn(t, settings.arabicVoice), [settings.arabicVoice]);
 
   const [filter, setFilter] = useState<Filter>("all");
@@ -41,6 +43,7 @@ export default function VocabPage() {
   const [session, setSession] = useState<VocabWord[] | null>(null);
 
   const stats = useMemo(() => vocabStats(words), [words]);
+  const reviewable = useMemo(() => buildReviewQueue(words, newToday).length, [words, newToday]);
 
   const filtered = useMemo(() => {
     const due = new Set(dueWords(words).map((w) => w.arabic));
@@ -54,12 +57,12 @@ export default function VocabPage() {
   }, [words, filter, query]);
 
   const startReview = () => {
-    const queue = dueWords(words);
+    const queue = buildReviewQueue(words, newToday);
     if (queue.length) setSession(queue);
   };
 
   if (session) {
-    return <Review queue={session} say={say} onReview={review} onDone={() => setSession(null)} />;
+    return <Review queue={session} say={say} language={settings.language} onReview={review} onDone={() => setSession(null)} />;
   }
 
   return (
@@ -88,12 +91,12 @@ export default function VocabPage() {
             <button
               type="button"
               onClick={startReview}
-              disabled={stats.due === 0}
+              disabled={reviewable === 0}
               className="flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-bold text-violet-950 disabled:opacity-40"
               style={{ background: "#c4b5fd" }}
             >
               <Brain className="h-4 w-4" />
-              {stats.due > 0 ? `Review ${stats.due} due` : "Nothing due 🎉"}
+              {reviewable > 0 ? `Review ${reviewable}` : stats.due > 0 ? "Daily limit reached" : "Nothing due 🎉"}
             </button>
           </div>
 
@@ -216,7 +219,7 @@ function WordRow({ w, say, onStar, onRemove }: { w: VocabWord; say: (t: string) 
 }
 
 /* ── spaced-repetition review session (flashcards) ── */
-function Review({ queue, say, onReview, onDone }: { queue: VocabWord[]; say: (t: string) => void; onReview: (arabic: string, correct: boolean) => void; onDone: () => void }) {
+function Review({ queue, say, language, onReview, onDone }: { queue: VocabWord[]; say: (t: string) => void; language: "en" | "he"; onReview: (arabic: string, grade: Grade) => void; onDone: () => void }) {
   const [idx, setIdx] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [correct, setCorrect] = useState(0);
@@ -224,12 +227,19 @@ function Review({ queue, say, onReview, onDone }: { queue: VocabWord[]; say: (t:
   const w = queue[idx];
   const done = idx >= queue.length;
 
-  const answer = (ok: boolean) => {
-    onReview(w.arabic, ok);
-    if (ok) setCorrect((c) => c + 1);
+  const answer = (grade: Grade) => {
+    onReview(w.arabic, grade);
+    if (grade !== "again") setCorrect((c) => c + 1);
     setRevealed(false);
     setIdx((i) => i + 1);
   };
+
+  const GRADES: { grade: Grade; label: string; bg: string; border: string; color: string }[] = [
+    { grade: "again", label: "Again", bg: "rgba(239,68,68,0.15)", border: "rgba(239,68,68,0.5)", color: "#fca5a5" },
+    { grade: "hard",  label: "Hard",  bg: "rgba(251,191,36,0.15)", border: "rgba(251,191,36,0.5)", color: "#fcd34d" },
+    { grade: "good",  label: "Good",  bg: "rgba(56,189,248,0.15)", border: "rgba(56,189,248,0.5)", color: "#7dd3fc" },
+    { grade: "easy",  label: "Easy",  bg: "rgba(34,197,94,0.18)", border: "rgba(34,197,94,0.6)", color: "#86efac" },
+  ];
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -267,18 +277,26 @@ function Review({ queue, say, onReview, onDone }: { queue: VocabWord[]; say: (t:
               )}
             </div>
 
+            {revealed && <Pronounce key={w.arabic} word={w.arabic} translit={w.translit} language={language} />}
+
             {!revealed ? (
               <button type="button" onClick={() => setRevealed(true)} className="rounded-2xl px-5 py-3 text-sm font-bold text-violet-950" style={{ background: "#c4b5fd" }}>
                 Show answer
               </button>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
-                <button type="button" onClick={() => answer(false)} className="flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-bold transition" style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.5)", color: "#fca5a5" }}>
-                  <RotateCcw className="h-4 w-4" /> Again
-                </button>
-                <button type="button" onClick={() => answer(true)} className="flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-bold transition" style={{ background: "rgba(34,197,94,0.18)", border: "1px solid rgba(34,197,94,0.6)", color: "#86efac" }}>
-                  <Check className="h-4 w-4" /> Got it
-                </button>
+              <div className="grid grid-cols-4 gap-2">
+                {GRADES.map((g) => (
+                  <button
+                    key={g.grade}
+                    type="button"
+                    onClick={() => answer(g.grade)}
+                    className="flex flex-col items-center gap-0.5 rounded-2xl px-2 py-3 text-sm font-bold transition hover:brightness-110"
+                    style={{ background: g.bg, border: `1px solid ${g.border}`, color: g.color }}
+                  >
+                    {g.label}
+                    <span className="text-[10px] font-semibold opacity-70">{nextDueLabel(w.level, g.grade)}</span>
+                  </button>
+                ))}
               </div>
             )}
           </>
@@ -297,5 +315,81 @@ function Review({ queue, say, onReview, onDone }: { queue: VocabWord[]; say: (t:
         )}
       </div>
     </main>
+  );
+}
+
+/* ── pronunciation practice: record the word, Gemini grades it ── */
+function Pronounce({ word, translit, language }: { word: string; translit: string; language: "en" | "he" }) {
+  const [status, setStatus] = useState<"idle" | "recording" | "grading" | "done" | "error">("idle");
+  const [result, setResult] = useState<PronounceResult | null>(null);
+  const recRef = useRef<Recorder | null>(null);
+
+  const start = async () => {
+    try {
+      recRef.current = await startRecording();
+      setStatus("recording");
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  const stopAndGrade = async () => {
+    const rec = recRef.current;
+    if (!rec) return;
+    setStatus("grading");
+    try {
+      const { base64, mimeType } = await rec.stop();
+      const res = await fetch("/api/pronounce", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ word, translit, language, audio: base64, mimeType }),
+      });
+      if (!res.ok) throw new Error();
+      setResult((await res.json()) as PronounceResult);
+      setStatus("done");
+    } catch {
+      setStatus("error");
+    } finally {
+      recRef.current = null;
+    }
+  };
+
+  const reset = () => { setResult(null); setStatus("idle"); };
+  const scoreColor = (s: number) => (s >= 80 ? "#22c55e" : s >= 60 ? "#7dd3fc" : "#fbbf24");
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      {status === "idle" && (
+        <button type="button" onClick={start} className="flex items-center gap-2 rounded-2xl border border-white/12 px-4 py-2 text-sm font-semibold text-violet-200/80 hover:bg-white/5 transition">
+          <Mic className="h-4 w-4" /> Practice saying it
+        </button>
+      )}
+      {status === "recording" && (
+        <button type="button" onClick={stopAndGrade} className="flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-bold text-red-50" style={{ background: "rgba(239,68,68,0.85)", animation: "pulse 1.2s ease-in-out infinite" }}>
+          <Square className="h-3.5 w-3.5 fill-current" /> Stop &amp; grade
+        </button>
+      )}
+      {status === "grading" && <p className="text-sm text-violet-200/60">Listening…</p>}
+      {status === "error" && (
+        <button type="button" onClick={reset} className="text-sm text-red-300/80 hover:text-red-200">Couldn&apos;t grade — tap to retry</button>
+      )}
+      {status === "done" && result && (
+        <div className="flex w-full flex-col items-center gap-2 rounded-2xl p-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)" }}>
+          <div className="flex items-center gap-3">
+            <span className="text-3xl font-black" style={{ color: scoreColor(result.score) }}>{result.score}<span className="text-sm text-amber-300/40">/100</span></span>
+            <div className="h-2 w-28 overflow-hidden rounded-full bg-white/10">
+              <div className="h-full rounded-full" style={{ width: `${result.score}%`, background: scoreColor(result.score) }} />
+            </div>
+          </div>
+          {result.heard && result.heard !== "—" && (
+            <p className="text-xs text-amber-300/50">heard: <span style={{ fontFamily: NAF, direction: "rtl" }}>{result.heard}</span></p>
+          )}
+          <p className="text-sm text-amber-100/80 text-center" dir={language === "he" ? "rtl" : "ltr"}>{result.feedback}</p>
+          <button type="button" onClick={reset} className="flex items-center gap-1.5 text-xs text-violet-300/60 hover:text-violet-200">
+            <Mic className="h-3.5 w-3.5" /> Try again
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

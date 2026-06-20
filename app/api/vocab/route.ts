@@ -5,7 +5,7 @@ import { db } from "@/lib/db/client";
 import { vocab } from "@/lib/db/schema";
 import {
   normalizeArabic, newVocab, reviewSchedule, mergeVocab, mergeWordLists,
-  type VocabWord, type VocabSource, type CaptureInput,
+  type VocabWord, type VocabSource, type CaptureInput, type Grade,
 } from "@/lib/srs";
 
 export const dynamic = "force-dynamic";
@@ -91,7 +91,7 @@ type Body =
   | { op: "sync"; words: VocabWord[] }
   | { op: "capture"; word: CaptureInput }
   | { op: "star"; arabic: string }
-  | { op: "review"; arabic: string; correct: boolean }
+  | { op: "review"; arabic: string; grade: Grade }
   | { op: "remove"; arabic: string };
 
 export async function POST(req: NextRequest) {
@@ -150,12 +150,12 @@ export async function POST(req: NextRequest) {
     const key = normalizeArabic(body.arabic);
     const existing = await getRow(userId, key);
     if (existing) {
-      const { level, due } = reviewSchedule(existing.level, body.correct);
+      const { level, due, lapse } = reviewSchedule(existing.level, body.grade);
       await db.update(vocab).set({
         level,
         due: new Date(due),
-        reps: existing.reps + (body.correct ? 1 : 0),
-        lapses: existing.lapses + (body.correct ? 0 : 1),
+        reps: existing.reps + (body.grade === "again" ? 0 : 1),
+        lapses: existing.lapses + (lapse ? 1 : 0),
         lastReviewed: new Date(),
       }).where(and(eq(vocab.userId, userId), eq(vocab.arabic, key)));
     }

@@ -3,17 +3,37 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import {
-  normalizeArabic, newVocab, reviewSchedule,
-  type VocabWord, type CaptureInput,
+  normalizeArabic, newVocab, reviewSchedule, mergeWordLists,
+  type VocabWord, type CaptureInput, type Grade,
 } from "@/lib/srs";
 
 // Re-export the pure helpers/types so existing imports (the My Words page) keep working.
 export {
   normalizeArabic, bucketOf, dueWords, vocabStats, MAX_LEVEL,
+  buildReviewQueue, nextDueLabel, NEW_PER_DAY,
 } from "@/lib/srs";
-export type { VocabWord, VocabSource, CaptureInput, MasteryBucket } from "@/lib/srs";
+export type { VocabWord, VocabSource, CaptureInput, MasteryBucket, Grade } from "@/lib/srs";
 
 const STORAGE_KEY = "arabeast.vocab.v1";
+const NEWDAY_KEY = "arabeast.vocab.newday.v1";
+
+const todayStr = () => new Date().toISOString().slice(0, 10);
+
+function loadNewToday(): number {
+  if (typeof window === "undefined") return 0;
+  try {
+    const raw = window.localStorage.getItem(NEWDAY_KEY);
+    if (!raw) return 0;
+    const { date, count } = JSON.parse(raw) as { date: string; count: number };
+    return date === todayStr() ? count : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveNewToday(count: number) {
+  try { window.localStorage.setItem(NEWDAY_KEY, JSON.stringify({ date: todayStr(), count })); } catch { /* ignore */ }
+}
 
 function load(): VocabWord[] {
   if (typeof window === "undefined") return [];
@@ -40,13 +60,21 @@ export function useVocab() {
   const { status } = useSession();
   const [words, setWords] = useState<VocabWord[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [newToday, setNewToday] = useState(0);
 
   const authedRef = useRef(false);
   const syncedRef = useRef(false);
 
-  // initial localStorage load (instant)
+  // initial localStorage load — re-key with the latest normalization + merge dupes
   useEffect(() => {
-    setWords(load());
+    const raw = load();
+    const merged = raw
+      .map((w) => ({ ...w, arabic: normalizeArabic(w.arabic) }))
+      .filter((w) => w.arabic)
+      .reduce<VocabWord[]>((acc, w) => mergeWordLists(acc, [w]), []);
+    if (JSON.stringify(merged) !== JSON.stringify(raw)) saveLocal(merged);
+    setWords(merged);
+    setNewToday(loadNewToday());
     setLoaded(true);
   }, []);
 
@@ -105,19 +133,24 @@ export function useVocab() {
     postOp({ op: "star", arabic: key });
   }, [postOp]);
 
-  const review = useCallback((arabic: string, correct: boolean) => {
+  const review = useCallback((arabic: string, grade: Grade) => {
     const key = normalizeArabic(arabic);
     setWords((prev) => {
       const now = new Date().toISOString();
+      const target = prev.find((w) => w.arabic === key);
+      // count a brand-new word toward today's new-word allowance
+      if (target && target.level === 0) {
+        setNewToday((n) => { const v = n + 1; saveNewToday(v); return v; });
+      }
       const next = prev.map((w) => {
         if (w.arabic !== key) return w;
-        const { level, due } = reviewSchedule(w.level, correct);
-        return { ...w, level, due, reps: w.reps + (correct ? 1 : 0), lapses: w.lapses + (correct ? 0 : 1), lastReviewed: now };
+        const { level, due, lapse } = reviewSchedule(w.level, grade);
+        return { ...w, level, due, reps: w.reps + (grade === "again" ? 0 : 1), lapses: w.lapses + (lapse ? 1 : 0), lastReviewed: now };
       });
       saveLocal(next);
       return next;
     });
-    postOp({ op: "review", arabic: key, correct });
+    postOp({ op: "review", arabic: key, grade });
   }, [postOp]);
 
   const remove = useCallback((arabic: string) => {
@@ -130,5 +163,5 @@ export function useVocab() {
     postOp({ op: "remove", arabic: key });
   }, [postOp]);
 
-  return { words, loaded, capture, toggleStar, review, remove };
+  return { words, loaded, newToday, capture, toggleStar, review, remove };
 }
