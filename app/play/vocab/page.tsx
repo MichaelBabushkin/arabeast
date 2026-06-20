@@ -2,12 +2,12 @@
 
 import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Volume2, Star, Trash2, BookMarked, Brain, RotateCcw, Check } from "lucide-react";
+import { ArrowLeft, Volume2, Star, Trash2, BookMarked, Brain } from "lucide-react";
 import { speakJinn } from "@/lib/speech";
 import { useSettings } from "@/lib/useSettings";
 import {
-  useVocab, dueWords, vocabStats, bucketOf, MAX_LEVEL,
-  type VocabWord, type VocabSource, type MasteryBucket,
+  useVocab, dueWords, vocabStats, bucketOf, MAX_LEVEL, buildReviewQueue, nextDueLabel,
+  type VocabWord, type VocabSource, type MasteryBucket, type Grade,
 } from "@/lib/useVocab";
 
 const NAF = "var(--font-noto-naskh), serif";
@@ -33,7 +33,7 @@ type Filter = "all" | "starred" | "due" | MasteryBucket;
 
 export default function VocabPage() {
   const { settings } = useSettings();
-  const { words, loaded, toggleStar, review, remove } = useVocab();
+  const { words, loaded, newToday, toggleStar, review, remove } = useVocab();
   const say = useCallback((t: string) => speakJinn(t, settings.arabicVoice), [settings.arabicVoice]);
 
   const [filter, setFilter] = useState<Filter>("all");
@@ -41,6 +41,7 @@ export default function VocabPage() {
   const [session, setSession] = useState<VocabWord[] | null>(null);
 
   const stats = useMemo(() => vocabStats(words), [words]);
+  const reviewable = useMemo(() => buildReviewQueue(words, newToday).length, [words, newToday]);
 
   const filtered = useMemo(() => {
     const due = new Set(dueWords(words).map((w) => w.arabic));
@@ -54,7 +55,7 @@ export default function VocabPage() {
   }, [words, filter, query]);
 
   const startReview = () => {
-    const queue = dueWords(words);
+    const queue = buildReviewQueue(words, newToday);
     if (queue.length) setSession(queue);
   };
 
@@ -88,12 +89,12 @@ export default function VocabPage() {
             <button
               type="button"
               onClick={startReview}
-              disabled={stats.due === 0}
+              disabled={reviewable === 0}
               className="flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-bold text-violet-950 disabled:opacity-40"
               style={{ background: "#c4b5fd" }}
             >
               <Brain className="h-4 w-4" />
-              {stats.due > 0 ? `Review ${stats.due} due` : "Nothing due 🎉"}
+              {reviewable > 0 ? `Review ${reviewable}` : stats.due > 0 ? "Daily limit reached" : "Nothing due 🎉"}
             </button>
           </div>
 
@@ -216,7 +217,7 @@ function WordRow({ w, say, onStar, onRemove }: { w: VocabWord; say: (t: string) 
 }
 
 /* ── spaced-repetition review session (flashcards) ── */
-function Review({ queue, say, onReview, onDone }: { queue: VocabWord[]; say: (t: string) => void; onReview: (arabic: string, correct: boolean) => void; onDone: () => void }) {
+function Review({ queue, say, onReview, onDone }: { queue: VocabWord[]; say: (t: string) => void; onReview: (arabic: string, grade: Grade) => void; onDone: () => void }) {
   const [idx, setIdx] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [correct, setCorrect] = useState(0);
@@ -224,12 +225,19 @@ function Review({ queue, say, onReview, onDone }: { queue: VocabWord[]; say: (t:
   const w = queue[idx];
   const done = idx >= queue.length;
 
-  const answer = (ok: boolean) => {
-    onReview(w.arabic, ok);
-    if (ok) setCorrect((c) => c + 1);
+  const answer = (grade: Grade) => {
+    onReview(w.arabic, grade);
+    if (grade !== "again") setCorrect((c) => c + 1);
     setRevealed(false);
     setIdx((i) => i + 1);
   };
+
+  const GRADES: { grade: Grade; label: string; bg: string; border: string; color: string }[] = [
+    { grade: "again", label: "Again", bg: "rgba(239,68,68,0.15)", border: "rgba(239,68,68,0.5)", color: "#fca5a5" },
+    { grade: "hard",  label: "Hard",  bg: "rgba(251,191,36,0.15)", border: "rgba(251,191,36,0.5)", color: "#fcd34d" },
+    { grade: "good",  label: "Good",  bg: "rgba(56,189,248,0.15)", border: "rgba(56,189,248,0.5)", color: "#7dd3fc" },
+    { grade: "easy",  label: "Easy",  bg: "rgba(34,197,94,0.18)", border: "rgba(34,197,94,0.6)", color: "#86efac" },
+  ];
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -272,13 +280,19 @@ function Review({ queue, say, onReview, onDone }: { queue: VocabWord[]; say: (t:
                 Show answer
               </button>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
-                <button type="button" onClick={() => answer(false)} className="flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-bold transition" style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.5)", color: "#fca5a5" }}>
-                  <RotateCcw className="h-4 w-4" /> Again
-                </button>
-                <button type="button" onClick={() => answer(true)} className="flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-bold transition" style={{ background: "rgba(34,197,94,0.18)", border: "1px solid rgba(34,197,94,0.6)", color: "#86efac" }}>
-                  <Check className="h-4 w-4" /> Got it
-                </button>
+              <div className="grid grid-cols-4 gap-2">
+                {GRADES.map((g) => (
+                  <button
+                    key={g.grade}
+                    type="button"
+                    onClick={() => answer(g.grade)}
+                    className="flex flex-col items-center gap-0.5 rounded-2xl px-2 py-3 text-sm font-bold transition hover:brightness-110"
+                    style={{ background: g.bg, border: `1px solid ${g.border}`, color: g.color }}
+                  >
+                    {g.label}
+                    <span className="text-[10px] font-semibold opacity-70">{nextDueLabel(w.level, g.grade)}</span>
+                  </button>
+                ))}
               </div>
             )}
           </>
